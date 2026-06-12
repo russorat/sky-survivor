@@ -139,5 +139,28 @@ export class Inventory {
     for (let i = 0; i < this.size; i++) {
       this.slots[i] = data[i] ? { ...data[i]! } : null;
     }
+    this.consolidateStacks();
+  }
+
+  consolidateStacks(): void {
+    const totals = new Map<ItemId, number>();
+    for (const slot of this.slots) {
+      if (!slot) continue;
+      totals.set(slot.itemId, (totals.get(slot.itemId) ?? 0) + slot.count);
+    }
+
+    this.slots.fill(null);
+
+    for (const [itemId, total] of totals) {
+      let remaining = total;
+      const stackSize = ITEMS[itemId].stackSize;
+      while (remaining > 0) {
+        const idx = this.slots.findIndex((slot) => slot === null);
+        if (idx === -1) break;
+        const count = Math.min(remaining, stackSize);
+        this.slots[idx] = { itemId, count };
+        remaining -= count;
+      }
+    }
   }
 }

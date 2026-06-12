@@ -21,6 +21,7 @@ export class CraftingSystem {
     if (!inventory.hasIngredients(recipe.ingredients)) return false;
     if (!inventory.removeIngredients(recipe.ingredients)) return false;
     inventory.addItem(recipe.output, recipe.outputCount);
+    inventory.consolidateStacks();
     return true;
   }
 }

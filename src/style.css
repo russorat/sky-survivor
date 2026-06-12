@@ -187,6 +187,12 @@ body,
   opacity: 0.75;
 }
 
+.recipe-missing {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #ffb74d;
+}
+
 .panel-close {
   margin-top: 16px;
   width: 100%;

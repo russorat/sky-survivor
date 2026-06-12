@@ -64,6 +64,7 @@ export class InventoryUI {
 
   openPanel(inventory: Inventory): void {
     this.open = true;
+    inventory.consolidateStacks();
     this.root.appendChild(this.element);
     this.element.classList.add('open');
     this.element.setAttribute('aria-hidden', 'false');
@@ -109,7 +110,7 @@ export class InventoryUI {
 
     this.recipeList.replaceChildren();
     const hasWorkbench = inventory.countItem('workbench') > 0;
-    const recipes = getVisibleRecipes(hasWorkbench);
+    const recipes = getVisibleRecipes();
 
     for (const recipe of recipes) {
       const canCraft = inventory.hasIngredients(recipe.ingredients);
@@ -121,6 +122,13 @@ export class InventoryUI {
         .join(', ');
       const benchTag = recipe.requiresWorkbench ? ' · Workbench' : '';
 
+      const missing = Object.entries(recipe.ingredients)
+        .filter(([id, count]) => inventory.countItem(id as ItemId) < (count ?? 0))
+        .map(([id, count]) => {
+          const have = inventory.countItem(id as ItemId);
+          return `${have}/${count} ${ITEMS[id as ItemId].name}`;
+        });
+
       const info = document.createElement('div');
       const title = document.createElement('strong');
       title.textContent = ITEMS[recipe.output].name;
@@ -128,6 +136,18 @@ export class InventoryUI {
       details.className = 'recipe-ingredients';
       details.textContent = `${ingredientText}${benchTag}`;
       info.append(title, details);
+
+      if (needsBench) {
+        const hint = document.createElement('div');
+        hint.className = 'recipe-missing';
+        hint.textContent = 'Craft a workbench first and keep it in your inventory';
+        info.append(hint);
+      } else if (missing.length > 0) {
+        const hint = document.createElement('div');
+        hint.className = 'recipe-missing';
+        hint.textContent = `Need: ${missing.join(', ')}`;
+        info.append(hint);
+      }
 
       const button = document.createElement('button');
       button.type = 'button';

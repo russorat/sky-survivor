@@ -61,7 +61,7 @@ export const RECIPES: Recipe[] = [
     id: 'metal_plate',
     output: 'metal_plate',
     outputCount: 2,
-    ingredients: { stone: 3, fang: 1 },
+    ingredients: { stone: 5 },
     requiresWorkbench: true,
   },
   {
@@ -101,6 +101,6 @@ export const RECIPES: Recipe[] = [
   },
 ];
 
-export function getVisibleRecipes(hasWorkbench: boolean): Recipe[] {
-  return RECIPES.filter((r) => !r.requiresWorkbench || hasWorkbench);
+export function getVisibleRecipes(_hasWorkbench?: boolean): Recipe[] {
+  return RECIPES;
 }
