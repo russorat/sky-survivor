@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import { WATER_LEVEL, BiomeType } from '../world/Biome';
 import { canAnimalExistAt } from './AnimalTypes';
 import type { AnimalTypeConfig } from './AnimalTypes';
-import { ModelLoader, getModelKeyForAnimal } from '../assets/ModelLoader';
 
 export interface AnimalWorldContext {
   getHeight: (x: number, z: number) => number;
@@ -186,15 +185,6 @@ export class Animal {
   }
 
   private static createMesh(config: AnimalTypeConfig): THREE.Group {
-    const modelKey = getModelKeyForAnimal(config.shape);
-    if (modelKey) {
-      const model = ModelLoader.getInstance().createInstance(modelKey, config.color, 1);
-      if (model) {
-        const targetHeight = config.shape === 'bird' ? 0.7 * config.scale : 0.9 * config.scale;
-        ModelLoader.getInstance().normalizeToHeight(model, targetHeight);
-        return model;
-      }
-    }
     return Animal.createPrimitiveMesh(config);
   }
 

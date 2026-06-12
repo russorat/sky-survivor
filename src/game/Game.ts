@@ -14,7 +14,6 @@ import { SaveManager } from '../save/SaveManager';
 import { getBiomeDisplayName } from '../world/Biome';
 import { VEHICLE_PRIORITY, type VehicleId } from '../vehicles/VehicleTypes';
 import { AudioSystem } from '../audio/AudioSystem';
-import { ModelLoader } from '../assets/ModelLoader';
 
 type GameState = 'menu' | 'playing' | 'dead' | 'paused';
 
@@ -106,7 +105,6 @@ export class Game {
 
   async init(): Promise<void> {
     await this.saveManager.init();
-    await ModelLoader.getInstance().preload();
 
     const save = await this.saveManager.load();
     if (save) {
