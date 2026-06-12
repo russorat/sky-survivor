@@ -40,7 +40,9 @@ body,
 #ui-root > .start-screen,
 #ui-root > .death-screen,
 #ui-root > .overlay-panel.open,
-#ui-root > .touch-buttons:not(.inactive):not(.hidden) {
+#ui-root > .touch-buttons:not(.inactive):not(.hidden),
+#ui-root > .touch-controls:not(.inactive):not(.hidden) .joystick-zone,
+#ui-root > .touch-controls:not(.inactive):not(.hidden) .look-zone {
   pointer-events: auto;
 }
 
@@ -406,7 +408,7 @@ body,
   position: absolute;
   top: 0;
   left: 150px;
-  right: 140px;
+  right: 180px;
   bottom: 0;
   pointer-events: auto;
   touch-action: none;
@@ -420,17 +422,21 @@ body,
   position: fixed;
   right: 20px;
   bottom: 24px;
-  z-index: 600;
+  z-index: 650;
   display: grid;
   grid-template-columns: repeat(2, 56px);
   gap: 10px;
-  pointer-events: none;
+  pointer-events: auto;
   touch-action: manipulation;
 }
 
 .touch-buttons.inactive,
 .touch-buttons.hidden {
   display: none;
+}
+
+.touch-buttons.above-overlay {
+  z-index: 750;
 }
 
 .touch-btn {
@@ -445,6 +451,8 @@ body,
   font-weight: 700;
   cursor: pointer;
   touch-action: manipulation;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .touch-btn.attack {

@@ -16,7 +16,7 @@ export class HungerSystem {
   }
 
   resetPartial(): void {
-    this.hunger = 25;
+    this.hunger = this.maxHunger;
   }
 
   toJSON(): number {

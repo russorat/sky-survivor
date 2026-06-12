@@ -86,6 +86,7 @@ export class TouchControls {
 
     root.appendChild(this.element);
     root.appendChild(this.buttonsElement);
+    this.bringButtonsToFront();
 
     this.joystick = this.element.querySelector('#move-joystick') as HTMLElement;
     this.knob = this.element.querySelector('#move-knob') as HTMLElement;
@@ -116,6 +117,14 @@ export class TouchControls {
 
   setInventoryToggleHandler(handler: () => void): void {
     this.onInventoryToggle = handler;
+  }
+
+  bringButtonsToFront(): void {
+    this.buttonsElement.parentElement?.appendChild(this.buttonsElement);
+  }
+
+  setButtonsAboveOverlay(above: boolean): void {
+    this.buttonsElement.classList.toggle('above-overlay', above);
   }
 
   resetPointerState(): void {
@@ -160,6 +169,26 @@ export class TouchControls {
       const action = (btn as HTMLElement).dataset.action;
       if (!action) return;
 
+      let lastActionAt = 0;
+      const fireAction = (e: Event) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const now = performance.now();
+        if (now - lastActionAt < 250) return;
+        lastActionAt = now;
+
+        if (action === 'inv' || action === 'craft') {
+          this.onInventoryToggle?.();
+          return;
+        }
+        if (action === 'vehicle') {
+          this.input.state.vehicleToggle = true;
+        }
+        if (action === 'eat') {
+          this.input.state.eatPressed = true;
+        }
+      };
+
       btn.addEventListener('pointerdown', (e) => {
         e.stopPropagation();
       });
@@ -198,20 +227,8 @@ export class TouchControls {
         return;
       }
 
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (action === 'inv' || action === 'craft') {
-          this.onInventoryToggle?.();
-          return;
-        }
-        if (action === 'vehicle') {
-          this.input.state.vehicleToggle = true;
-        }
-        if (action === 'eat') {
-          this.input.state.eatPressed = true;
-        }
-      });
+      btn.addEventListener('pointerup', fireAction);
+      btn.addEventListener('touchend', fireAction);
     });
   }
 

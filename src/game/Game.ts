@@ -102,7 +102,7 @@ export class Game {
     });
 
     if (this.input.touchMode) {
-      this.touchControls.setInventoryToggleHandler(() => this.scheduleInventoryToggle());
+      this.touchControls.setInventoryToggleHandler(() => this.toggleInventoryOverlay());
     }
 
     window.addEventListener('resize', () => this.onResize());
@@ -168,6 +168,7 @@ export class Game {
       void this.audio.resume();
       this.state = 'playing';
       el.style.display = 'none';
+      this.touchControls.bringButtonsToFront();
       this.touchControls.setActive(true);
       if (!this.input.touchMode) this.canvas.requestPointerLock();
     });
@@ -190,12 +191,11 @@ export class Game {
       this.respawn();
       el.style.display = 'none';
       this.state = 'playing';
+      this.touchControls.bringButtonsToFront();
       this.touchControls.setActive(true);
     });
     return el;
   }
-
-  private inventoryTogglePending = false;
 
   private update(dt: number): void {
     if (this.state === 'paused') {
@@ -525,24 +525,18 @@ export class Game {
   }
 
   /** Defer until after iOS finishes the tap that opened inventory. */
-  private scheduleInventoryToggle(): void {
-    if (this.inventoryTogglePending) return;
-    this.inventoryTogglePending = true;
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        this.inventoryTogglePending = false;
-        if (this.state !== 'playing') return;
-        this.toggleInventoryOverlay();
-      });
-    });
-  }
-
   private openInventoryOverlay(): void {
     if (this.inventoryUI.isOpen()) return;
     document.exitPointerLock();
     this.input.setUiBlocking(true);
     this.inventoryUI.openPanel(this.inventory);
-    this.touchControls.setActive(false);
+    if (this.input.touchMode) {
+      this.touchControls.setMovementActive(false);
+      this.touchControls.setButtonsAboveOverlay(true);
+      this.touchControls.bringButtonsToFront();
+    } else {
+      this.touchControls.setActive(false);
+    }
   }
 
   private closeInventoryOverlay(): void {
@@ -585,8 +579,10 @@ export class Game {
 
   private onOverlayClosed(): void {
     this.input.setUiBlocking(false);
+    this.touchControls.setButtonsAboveOverlay(false);
     if (this.state === 'playing') {
       this.touchControls.setActive(true);
+      this.touchControls.bringButtonsToFront();
     }
     if (this.state === 'playing' && !this.input.touchMode) {
       this.canvas.requestPointerLock();
