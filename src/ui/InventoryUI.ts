@@ -5,6 +5,7 @@ import { getVisibleRecipes } from '../crafting/recipes';
 
 export class InventoryUI {
   readonly element: HTMLElement;
+  private root: HTMLElement;
   private panelCard: HTMLElement;
   private grid: HTMLElement;
   private recipeList: HTMLElement;
@@ -14,8 +15,10 @@ export class InventoryUI {
   private onCraft?: () => void;
 
   constructor(root: HTMLElement) {
+    this.root = root;
     this.element = document.createElement('div');
     this.element.className = 'overlay-panel';
+    this.element.setAttribute('aria-hidden', 'true');
     this.element.innerHTML = `
       <div class="panel-card">
         <h2>Inventory & Crafting</h2>
@@ -61,7 +64,9 @@ export class InventoryUI {
 
   openPanel(inventory: Inventory): void {
     this.open = true;
+    this.root.appendChild(this.element);
     this.element.classList.add('open');
+    this.element.setAttribute('aria-hidden', 'false');
     this.render(inventory);
   }
 
@@ -69,6 +74,7 @@ export class InventoryUI {
     if (!this.open) return;
     this.open = false;
     this.element.classList.remove('open');
+    this.element.setAttribute('aria-hidden', 'true');
     this.onClose?.();
   }
 

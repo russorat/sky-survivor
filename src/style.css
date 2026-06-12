@@ -33,6 +33,13 @@ body,
 }
 
 #ui-root > * {
+  pointer-events: none;
+}
+
+#ui-root > .start-screen,
+#ui-root > .death-screen,
+#ui-root > .overlay-panel.open,
+#ui-root > .touch-buttons:not(.inactive):not(.hidden) {
   pointer-events: auto;
 }
 
@@ -126,21 +133,27 @@ body,
 .overlay-panel {
   position: fixed;
   inset: 0;
-  z-index: 100;
-  display: none;
+  z-index: 250;
+  display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(4px);
-  pointer-events: auto;
-  touch-action: auto;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  touch-action: manipulation;
 }
 
 .overlay-panel.open {
-  display: flex;
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .panel-card {
+  position: relative;
+  z-index: 1;
   width: min(520px, 92vw);
   max-height: 80vh;
   overflow: auto;
@@ -152,6 +165,7 @@ body,
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #fff;
   touch-action: pan-y;
+  pointer-events: auto;
 }
 
 .panel-card h2 {
@@ -386,6 +400,10 @@ body,
   touch-action: none;
 }
 
+.touch-buttons:not(.inactive):not(.hidden) {
+  pointer-events: auto;
+}
+
 .touch-buttons {
   position: fixed;
   right: 20px;
@@ -394,7 +412,7 @@ body,
   display: grid;
   grid-template-columns: repeat(2, 56px);
   gap: 10px;
-  pointer-events: auto;
+  pointer-events: none;
   touch-action: manipulation;
 }
 

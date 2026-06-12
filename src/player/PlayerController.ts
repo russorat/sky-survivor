@@ -23,6 +23,11 @@ export class PlayerController {
   mountedVehicle: VehicleId | null = null;
   private vehicleMesh: THREE.Group | null = null;
   private characterParts: THREE.Object3D[] = [];
+  private leftArm!: THREE.Group;
+  private rightArm!: THREE.Group;
+  private leftLeg!: THREE.Group;
+  private rightLeg!: THREE.Group;
+  private walkPhase = 0;
   yaw = 0;
   pitch = 0;
 
@@ -69,6 +74,7 @@ export class PlayerController {
 
     this.mesh.position.copy(this.position);
     this.mesh.rotation.y = this.yaw;
+    this.updateWalkAnimation(dt);
 
     return { forward: this.getForward(), modeToggled, fuelUsed };
   }
@@ -206,15 +212,58 @@ export class PlayerController {
     head.castShadow = true;
     group.add(head);
 
-    for (const side of [-1, 1]) {
-      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.6, 0.15), shirtMat);
-      arm.position.set(side * 0.55, 1.1, 0);
-      group.add(arm);
-      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.7, 0.18), pantsMat);
-      leg.position.set(side * 0.2, 0.35, 0);
-      group.add(leg);
-    }
+    this.leftArm = this.createLimb(new THREE.BoxGeometry(0.15, 0.6, 0.15), shirtMat, -0.55, 1.4, 0.6);
+    this.rightArm = this.createLimb(new THREE.BoxGeometry(0.15, 0.6, 0.15), shirtMat, 0.55, 1.4, 0.6);
+    this.leftLeg = this.createLimb(new THREE.BoxGeometry(0.18, 0.7, 0.18), pantsMat, -0.2, 0.7, 0.7);
+    this.rightLeg = this.createLimb(new THREE.BoxGeometry(0.18, 0.7, 0.18), pantsMat, 0.2, 0.7, 0.7);
+    group.add(this.leftArm, this.rightArm, this.leftLeg, this.rightLeg);
 
     return group;
+  }
+
+  private createLimb(
+    geometry: THREE.BoxGeometry,
+    material: THREE.Material,
+    pivotX: number,
+    pivotY: number,
+    length: number,
+  ): THREE.Group {
+    const pivot = new THREE.Group();
+    pivot.position.set(pivotX, pivotY, 0);
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.y = -length / 2;
+    mesh.castShadow = true;
+    pivot.add(mesh);
+    return pivot;
+  }
+
+  private updateWalkAnimation(dt: number): void {
+    const limbs = [this.leftArm, this.rightArm, this.leftLeg, this.rightLeg];
+
+    if (this.mountedVehicle || this.mode !== 'walk') {
+      this.walkPhase = 0;
+      this.resetLimbRotations(limbs, dt);
+      return;
+    }
+
+    const speed = this.walking.velocity.length();
+    if (speed < 0.25) {
+      this.resetLimbRotations(limbs, dt);
+      return;
+    }
+
+    this.walkPhase += dt * (5 + speed * 0.4);
+    const swing = Math.sin(this.walkPhase) * 0.55;
+    this.leftLeg.rotation.x = swing;
+    this.rightLeg.rotation.x = -swing;
+    this.leftArm.rotation.x = -swing * 0.65;
+    this.rightArm.rotation.x = swing * 0.65;
+  }
+
+  private resetLimbRotations(limbs: THREE.Group[], dt: number): void {
+    const blend = Math.min(1, dt * 12);
+    for (const limb of limbs) {
+      limb.rotation.x = THREE.MathUtils.lerp(limb.rotation.x, 0, blend);
+    }
   }
 }

@@ -274,6 +274,7 @@ export class Game {
     const died = this.health.update(dt, this.hunger.isStarving());
     if (died) {
       this.audio.play('death');
+      this.closeInventoryOverlay();
       this.state = 'dead';
       this.deathScreen.style.display = 'flex';
       this.touchControls.setActive(false);
@@ -455,16 +456,20 @@ export class Game {
     document.exitPointerLock();
     this.input.setUiBlocking(true);
     this.inventoryUI.openPanel(this.inventory);
-    requestAnimationFrame(() => {
-      if (this.inventoryUI.isOpen()) {
-        this.touchControls.setActive(false);
-      }
-    });
+    this.touchControls.setActive(false);
+  }
+
+  private closeInventoryOverlay(): void {
+    if (!this.inventoryUI.isOpen()) {
+      this.input.setUiBlocking(false);
+      return;
+    }
+    this.inventoryUI.close();
   }
 
   private toggleInventoryOverlay(): void {
     if (this.inventoryUI.isOpen()) {
-      this.inventoryUI.close();
+      this.closeInventoryOverlay();
     } else {
       this.openInventoryOverlay();
     }
