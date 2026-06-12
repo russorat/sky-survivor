@@ -5,6 +5,7 @@ import { getVisibleRecipes } from '../crafting/recipes';
 
 export class InventoryUI {
   readonly element: HTMLElement;
+  private panelCard: HTMLElement;
   private grid: HTMLElement;
   private recipeList: HTMLElement;
   private open = false;
@@ -22,17 +23,28 @@ export class InventoryUI {
         <div class="inventory-grid" id="inventory-grid"></div>
         <h3 class="panel-section-title">Recipes</h3>
         <div class="recipe-list" id="recipe-list"></div>
-        <button class="panel-close" id="inventory-close">Close</button>
+        <button class="panel-close" id="inventory-close" type="button">Close</button>
       </div>
     `;
     root.appendChild(this.element);
+    this.panelCard = this.element.querySelector('.panel-card') as HTMLElement;
     this.grid = this.element.querySelector('#inventory-grid') as HTMLElement;
     this.recipeList = this.element.querySelector('#recipe-list') as HTMLElement;
-    this.element.querySelector('#inventory-close')?.addEventListener('click', (e) => {
+
+    this.panelCard.addEventListener('click', (e) => e.stopPropagation());
+    this.panelCard.addEventListener('pointerdown', (e) => e.stopPropagation());
+
+    this.element.querySelector('#inventory-close')?.addEventListener('pointerup', (e) => {
+      e.preventDefault();
       e.stopPropagation();
-      this.toggle(false);
+      this.close();
     });
-    this.element.addEventListener('click', (e) => e.stopPropagation());
+
+    this.element.addEventListener('pointerup', (e) => {
+      if (e.target === this.element) {
+        this.close();
+      }
+    });
   }
 
   setOnClose(fn: () => void): void {
@@ -47,28 +59,49 @@ export class InventoryUI {
     return this.open;
   }
 
-  toggle(force?: boolean): void {
-    const wasOpen = this.open;
-    this.open = force ?? !this.open;
-    this.element.classList.toggle('open', this.open);
-    if (wasOpen && !this.open) this.onClose?.();
+  openPanel(inventory: Inventory): void {
+    this.open = true;
+    this.element.classList.add('open');
+    this.render(inventory);
+  }
+
+  close(): void {
+    if (!this.open) return;
+    this.open = false;
+    this.element.classList.remove('open');
+    this.onClose?.();
+  }
+
+  toggle(inventory: Inventory, force?: boolean): void {
+    const nextOpen = force ?? !this.open;
+    if (nextOpen === this.open) return;
+    if (nextOpen) {
+      this.openPanel(inventory);
+    } else {
+      this.close();
+    }
   }
 
   render(inventory: Inventory): void {
-    this.grid.innerHTML = '';
+    this.grid.replaceChildren();
     for (let i = 0; i < inventory.size; i++) {
       const slot = inventory.slots[i];
       const el = document.createElement('div');
       el.className = 'inventory-slot';
       if (slot) {
-        el.innerHTML = `<span>${ITEMS[slot.itemId].name}</span><span class="count">${slot.count}</span>`;
+        const name = document.createElement('span');
+        name.textContent = ITEMS[slot.itemId].name;
+        const count = document.createElement('span');
+        count.className = 'count';
+        count.textContent = String(slot.count);
+        el.append(name, count);
       } else {
         el.textContent = '—';
       }
       this.grid.appendChild(el);
     }
 
-    this.recipeList.innerHTML = '';
+    this.recipeList.replaceChildren();
     const hasWorkbench = inventory.countItem('workbench') > 0;
     const recipes = getVisibleRecipes(hasWorkbench);
 
@@ -81,23 +114,30 @@ export class InventoryUI {
         .map(([id, count]) => `${count} ${ITEMS[id as ItemId].name}`)
         .join(', ');
       const benchTag = recipe.requiresWorkbench ? ' · Workbench' : '';
-      item.innerHTML = `
-        <div>
-          <strong>${ITEMS[recipe.output].name}</strong>
-          <div class="recipe-ingredients">${ingredientText}${benchTag}</div>
-        </div>
-        <button type="button" ${canCraft && !needsBench ? '' : 'disabled'}>Craft</button>
-      `;
-      const button = item.querySelector('button');
-      button?.addEventListener('click', (e) => {
-        e.stopPropagation();
+
+      const info = document.createElement('div');
+      const title = document.createElement('strong');
+      title.textContent = ITEMS[recipe.output].name;
+      const details = document.createElement('div');
+      details.className = 'recipe-ingredients';
+      details.textContent = `${ingredientText}${benchTag}`;
+      info.append(title, details);
+
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = 'Craft';
+      button.disabled = !(canCraft && !needsBench);
+      button.addEventListener('pointerup', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         if (!canCraft || needsBench) return;
         if (this.crafting.craft(inventory, recipe.id)) {
           this.onCraft?.();
           this.render(inventory);
         }
       });
+
+      item.append(info, button);
       this.recipeList.appendChild(item);
     }
   }

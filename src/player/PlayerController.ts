@@ -190,6 +190,14 @@ export class PlayerController {
     this.walking.velocity.set(0, 0, 0);
   }
 
+  applyModel(model: THREE.Group): void {
+    this.characterParts.forEach((part) => {
+      part.visible = false;
+    });
+    model.rotation.y = Math.PI;
+    this.mesh.add(model);
+  }
+
   private createMesh(): THREE.Group {
     const group = new THREE.Group();
     const shirtMat = new THREE.MeshLambertMaterial({ color: 0x43a047, flatShading: true });

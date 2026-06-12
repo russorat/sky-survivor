@@ -133,6 +133,7 @@ body,
   background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(4px);
   pointer-events: auto;
+  touch-action: auto;
 }
 
 .overlay-panel.open {
@@ -143,11 +144,14 @@ body,
   width: min(520px, 92vw);
   max-height: 80vh;
   overflow: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
   padding: 20px;
   border-radius: 16px;
   background: rgba(26, 26, 46, 0.96);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #fff;
+  touch-action: pan-y;
 }
 
 .panel-card h2 {
@@ -186,9 +190,12 @@ body,
   display: grid;
   grid-template-columns: repeat(5, minmax(56px, 1fr));
   gap: 8px;
+  min-height: 120px;
 }
 
 .inventory-slot {
+  min-height: 56px;
+  min-width: 56px;
   aspect-ratio: 1;
   display: flex;
   flex-direction: column;
@@ -198,8 +205,10 @@ body,
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
   font-size: 11px;
+  line-height: 1.2;
   text-align: center;
   padding: 4px;
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .inventory-slot .count {
@@ -211,6 +220,7 @@ body,
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-height: 48px;
 }
 
 .recipe-item {

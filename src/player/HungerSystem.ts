@@ -44,6 +44,10 @@ export class HealthSystem {
     return false;
   }
 
+  takeDamage(amount: number): void {
+    this.health = Math.max(0, this.health - amount);
+  }
+
   resetPartial(): void {
     this.health = 50;
   }

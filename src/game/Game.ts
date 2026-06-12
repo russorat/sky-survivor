@@ -13,6 +13,8 @@ import { InventoryUI } from '../ui/InventoryUI';
 import { SaveManager } from '../save/SaveManager';
 import { getBiomeDisplayName } from '../world/Biome';
 import { VEHICLE_PRIORITY, type VehicleId } from '../vehicles/VehicleTypes';
+import { AudioSystem } from '../audio/AudioSystem';
+import { ModelLoader } from '../assets/ModelLoader';
 
 type GameState = 'menu' | 'playing' | 'dead' | 'paused';
 
@@ -35,6 +37,7 @@ export class Game {
   private hud: HUD;
   private inventoryUI: InventoryUI;
   private saveManager = new SaveManager();
+  private audio = new AudioSystem();
 
   private state: GameState = 'menu';
   private startScreen: HTMLElement;
@@ -92,6 +95,7 @@ export class Game {
     this.inventoryUI.setOnClose(() => this.onOverlayClosed());
     this.inventoryUI.setOnCraft(() => {
       this.updateEquippedWeapon();
+      this.audio.play('craft');
       this.hud.showToast('Crafted!');
       this.refreshUI();
     });
@@ -102,6 +106,12 @@ export class Game {
 
   async init(): Promise<void> {
     await this.saveManager.init();
+    await ModelLoader.getInstance().preload();
+    const playerModel = ModelLoader.getInstance().createInstance('player', 0xffffff, 0.01);
+    if (playerModel) {
+      this.player.applyModel(playerModel);
+    }
+
     const save = await this.saveManager.load();
     if (save) {
       this.player.position.set(save.position.x, save.position.y, save.position.z);
@@ -133,6 +143,7 @@ export class Game {
           Attack trees (sticks) and rocks (stone) with F — aim at them and hit a few times<br/>
           Craft a bow (3 sticks + 2 hide) and arrows (2 sticks + 1 bone) for ranged combat<br/>
           Craft a workbench, then build gliders, planes, and rocket ships. Press V to mount<br/>
+          Watch out for wolves, jackals, boars, and alligators — they fight back<br/>
           Mobile: left thumb on joystick to move, right thumb drag the open area to look around<br/>
           Action buttons sit on the far right — drag camera in the space to their left
         </p>
@@ -140,6 +151,7 @@ export class Game {
     `;
     el.querySelector('#start-btn')?.addEventListener('pointerup', (e) => {
       e.preventDefault();
+      void this.audio.resume();
       this.state = 'playing';
       el.style.display = 'none';
       this.touchControls.setActive(true);
@@ -155,7 +167,7 @@ export class Game {
     el.innerHTML = `
       <div class="death-card">
         <h1>You collapsed</h1>
-        <p>Hunger got the better of you. You respawn at the origin with your inventory intact.</p>
+        <p>Hunger and predators can end your run. You respawn at the origin with your inventory intact.</p>
         <button class="primary-btn" id="respawn-btn">Continue</button>
       </div>
     `;
@@ -219,7 +231,11 @@ export class Game {
       this.hud.showToast(modeToggled === 'walk' ? 'Walking mode' : 'Flying mode');
     }
     this.world.update(this.player.position);
-    this.spawner.update(dt, this.player.position, this.world);
+    const animalDamage = this.spawner.update(dt, this.player.position, this.world);
+    if (animalDamage > 0) {
+      this.health.takeDamage(animalDamage);
+      this.audio.play('hurt');
+    }
 
     if (this.input.state.attackPressed) {
       this.handleAttack(forward);
@@ -228,6 +244,7 @@ export class Game {
     const projectileHits = this.combat.updateProjectiles(dt, this.spawner.getAliveAnimals());
     for (const { animal, killed } of projectileHits) {
       if (killed) {
+        this.audio.play('hit');
         this.combat.spawnLoot(animal);
         this.spawner.removeAnimal(animal);
         this.hud.showToast(`Defeated ${animal.config.name}`);
@@ -239,12 +256,16 @@ export class Game {
     const collected = this.combat.update(dt, this.player.position);
     for (const drop of collected) {
       const added = this.inventory.addItem(drop.itemId, drop.count);
-      if (added > 0) this.hud.showToast(`+${added} ${ITEMS[drop.itemId].name}`);
+      if (added > 0) {
+        this.audio.play('loot');
+        this.hud.showToast(`+${added} ${ITEMS[drop.itemId].name}`);
+      }
     }
 
     this.hunger.update(dt);
     const died = this.health.update(dt, this.hunger.isStarving());
     if (died) {
+      this.audio.play('death');
       this.state = 'dead';
       this.deathScreen.style.display = 'flex';
       this.touchControls.setActive(false);
@@ -328,6 +349,7 @@ export class Game {
       this.world.getHarvestables(),
     );
     if (harvested) {
+      this.audio.play('hit');
       const label = harvested.type === 'tree' ? 'Tree' : 'Rock';
       if (harvested.destroyed) {
         this.hud.showToast(`${label} harvested!`);
@@ -342,6 +364,7 @@ export class Game {
         aim,
         ITEMS.bow.damage ?? 18,
       )) {
+        this.audio.play('attack');
         this.inventory.removeItem('arrow', 1);
       }
       return;
@@ -357,6 +380,10 @@ export class Game {
       damage,
       this.spawner.getAliveAnimals(),
     );
+    if (hit) {
+      this.audio.play('attack');
+      this.audio.play('hit');
+    }
     if (hit?.dead) {
       this.combat.spawnLoot(hit);
       this.spawner.removeAnimal(hit);
@@ -369,6 +396,7 @@ export class Game {
       if (this.inventory.countItem(foodId) > 0) {
         this.inventory.removeItem(foodId, 1);
         this.hunger.eat(ITEMS[foodId].food ?? 20);
+        this.audio.play('eat');
         this.hud.showToast(`Ate ${ITEMS[foodId].name}`);
         return;
       }
@@ -416,14 +444,13 @@ export class Game {
 
   private toggleInventoryOverlay(): void {
     const willOpen = !this.inventoryUI.isOpen();
-    this.inventoryUI.toggle();
     if (willOpen) {
       document.exitPointerLock();
       this.input.setUiBlocking(true);
       this.touchControls.setActive(false);
-      this.refreshUI();
+      this.inventoryUI.openPanel(this.inventory);
     } else {
-      this.onOverlayClosed();
+      this.inventoryUI.close();
     }
   }
 

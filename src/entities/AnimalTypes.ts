@@ -21,6 +21,8 @@ export type AnimalMovement = 'ground' | 'fly' | 'swim';
 
 export type AnimalHabitat = 'land' | 'water';
 
+export type AnimalBehavior = 'passive' | 'aggressive';
+
 export interface AnimalTypeConfig {
   id: string;
   name: string;
@@ -35,6 +37,9 @@ export interface AnimalTypeConfig {
   extraDrops: AnimalDrop[];
   shape: AnimalShape;
   movement: AnimalMovement;
+  behavior: AnimalBehavior;
+  attackDamage?: number;
+  aggroRange?: number;
 }
 
 export const ANIMAL_TYPES: AnimalTypeConfig[] = [
@@ -53,6 +58,7 @@ export const ANIMAL_TYPES: AnimalTypeConfig[] = [
     extraDrops: [{ itemId: 'fang', min: 0, max: 1, chance: 0.5 }],
     shape: 'scorpion',
     movement: 'ground',
+    behavior: 'passive',
   },
   {
     id: 'snake',
@@ -68,6 +74,7 @@ export const ANIMAL_TYPES: AnimalTypeConfig[] = [
     extraDrops: [{ itemId: 'fang', min: 1, max: 1 }],
     shape: 'snake',
     movement: 'ground',
+    behavior: 'passive',
   },
   {
     id: 'vulture',
@@ -83,6 +90,7 @@ export const ANIMAL_TYPES: AnimalTypeConfig[] = [
     extraDrops: [{ itemId: 'bone', min: 0, max: 1, chance: 0.6 }],
     shape: 'bird',
     movement: 'fly',
+    behavior: 'passive',
   },
   {
     id: 'jackal',
@@ -98,6 +106,9 @@ export const ANIMAL_TYPES: AnimalTypeConfig[] = [
     extraDrops: [{ itemId: 'hide', min: 1, max: 1 }],
     shape: 'quadruped',
     movement: 'ground',
+    behavior: 'aggressive',
+    attackDamage: 10,
+    aggroRange: 22,
   },
   // Forest (land)
   {
@@ -114,6 +125,7 @@ export const ANIMAL_TYPES: AnimalTypeConfig[] = [
     extraDrops: [{ itemId: 'hide', min: 1, max: 1 }],
     shape: 'quadruped',
     movement: 'ground',
+    behavior: 'passive',
   },
   {
     id: 'wolf',
@@ -129,6 +141,9 @@ export const ANIMAL_TYPES: AnimalTypeConfig[] = [
     extraDrops: [{ itemId: 'hide', min: 1, max: 2 }],
     shape: 'quadruped',
     movement: 'ground',
+    behavior: 'aggressive',
+    attackDamage: 12,
+    aggroRange: 24,
   },
   {
     id: 'rabbit',
@@ -144,6 +159,7 @@ export const ANIMAL_TYPES: AnimalTypeConfig[] = [
     extraDrops: [{ itemId: 'hide', min: 0, max: 1, chance: 0.4 }],
     shape: 'quadruped',
     movement: 'ground',
+    behavior: 'passive',
   },
   {
     id: 'boar',
@@ -159,6 +175,9 @@ export const ANIMAL_TYPES: AnimalTypeConfig[] = [
     extraDrops: [{ itemId: 'hide', min: 1, max: 2 }, { itemId: 'bone', min: 0, max: 1, chance: 0.5 }],
     shape: 'quadruped',
     movement: 'ground',
+    behavior: 'aggressive',
+    attackDamage: 14,
+    aggroRange: 18,
   },
   // Tundra (land)
   {
@@ -175,6 +194,7 @@ export const ANIMAL_TYPES: AnimalTypeConfig[] = [
     extraDrops: [{ itemId: 'hide', min: 2, max: 2 }, { itemId: 'bone', min: 1, max: 2 }],
     shape: 'quadruped',
     movement: 'ground',
+    behavior: 'passive',
   },
   {
     id: 'arctic_fox',
@@ -190,6 +210,7 @@ export const ANIMAL_TYPES: AnimalTypeConfig[] = [
     extraDrops: [{ itemId: 'hide', min: 1, max: 1 }],
     shape: 'quadruped',
     movement: 'ground',
+    behavior: 'passive',
   },
   {
     id: 'snow_owl',
@@ -205,6 +226,7 @@ export const ANIMAL_TYPES: AnimalTypeConfig[] = [
     extraDrops: [{ itemId: 'bone', min: 0, max: 1, chance: 0.5 }],
     shape: 'bird',
     movement: 'fly',
+    behavior: 'passive',
   },
   {
     id: 'polar_hare',
@@ -220,6 +242,7 @@ export const ANIMAL_TYPES: AnimalTypeConfig[] = [
     extraDrops: [{ itemId: 'hide', min: 0, max: 1, chance: 0.5 }],
     shape: 'quadruped',
     movement: 'ground',
+    behavior: 'passive',
   },
   // Ocean (water)
   {
@@ -236,6 +259,7 @@ export const ANIMAL_TYPES: AnimalTypeConfig[] = [
     extraDrops: [{ itemId: 'bone', min: 0, max: 1, chance: 0.3 }],
     shape: 'fish',
     movement: 'swim',
+    behavior: 'passive',
   },
   {
     id: 'crab',
@@ -251,6 +275,7 @@ export const ANIMAL_TYPES: AnimalTypeConfig[] = [
     extraDrops: [{ itemId: 'fang', min: 0, max: 1, chance: 0.4 }],
     shape: 'crab',
     movement: 'ground',
+    behavior: 'passive',
   },
   {
     id: 'seal',
@@ -266,6 +291,7 @@ export const ANIMAL_TYPES: AnimalTypeConfig[] = [
     extraDrops: [{ itemId: 'hide', min: 1, max: 2 }],
     shape: 'quadruped',
     movement: 'ground',
+    behavior: 'passive',
   },
   {
     id: 'seagull',
@@ -281,6 +307,7 @@ export const ANIMAL_TYPES: AnimalTypeConfig[] = [
     extraDrops: [{ itemId: 'bone', min: 0, max: 1, chance: 0.4 }],
     shape: 'bird',
     movement: 'fly',
+    behavior: 'passive',
   },
   // Swamp
   {
@@ -297,6 +324,7 @@ export const ANIMAL_TYPES: AnimalTypeConfig[] = [
     extraDrops: [{ itemId: 'hide', min: 0, max: 1, chance: 0.3 }],
     shape: 'amphibian',
     movement: 'ground',
+    behavior: 'passive',
   },
   {
     id: 'heron',
@@ -312,6 +340,7 @@ export const ANIMAL_TYPES: AnimalTypeConfig[] = [
     extraDrops: [{ itemId: 'bone', min: 0, max: 1, chance: 0.5 }],
     shape: 'bird',
     movement: 'fly',
+    behavior: 'passive',
   },
   {
     id: 'alligator',
@@ -327,6 +356,9 @@ export const ANIMAL_TYPES: AnimalTypeConfig[] = [
     extraDrops: [{ itemId: 'hide', min: 1, max: 2 }, { itemId: 'fang', min: 1, max: 2 }],
     shape: 'snake',
     movement: 'ground',
+    behavior: 'aggressive',
+    attackDamage: 16,
+    aggroRange: 20,
   },
   {
     id: 'mud_turtle',
@@ -342,6 +374,7 @@ export const ANIMAL_TYPES: AnimalTypeConfig[] = [
     extraDrops: [{ itemId: 'hide', min: 1, max: 1 }],
     shape: 'amphibian',
     movement: 'swim',
+    behavior: 'passive',
   },
 ];
 
