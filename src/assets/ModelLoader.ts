@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const MODEL_PATHS = {
-  player: '/models/player.glb',
   quadruped: '/models/fox.glb',
   bird: '/models/duck.glb',
 } as const;
@@ -54,6 +53,16 @@ export class ModelLoader {
       }
     });
     return group;
+  }
+
+  /** Scale and ground a cloned model to a target height in world units. */
+  normalizeToHeight(model: THREE.Group, targetHeight: number): void {
+    const box = new THREE.Box3().setFromObject(model);
+    const size = box.getSize(new THREE.Vector3());
+    const scale = targetHeight / Math.max(size.y, 0.001);
+    model.scale.multiplyScalar(scale);
+    box.setFromObject(model);
+    model.position.y -= box.min.y;
   }
 
   private async loadTemplate(path: string): Promise<THREE.Group | null> {

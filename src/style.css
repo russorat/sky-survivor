@@ -372,7 +372,7 @@ body,
   gap: 10px;
   pointer-events: auto;
   touch-action: manipulation;
-  z-index: 2;
+  z-index: 5;
 }
 
 .touch-btn {

@@ -24,13 +24,13 @@ export class TouchControls {
       </div>
       <div class="look-zone" id="look-zone"></div>
       <div class="touch-actions">
-        <button class="touch-btn" data-action="up">UP</button>
-        <button class="touch-btn" data-action="down">DN</button>
-        <button class="touch-btn" data-action="inv">INV</button>
-        <button class="touch-btn" data-action="craft">CRF</button>
-        <button class="touch-btn" data-action="vehicle">VEH</button>
-        <button class="touch-btn attack" data-action="attack">ATTACK</button>
-        <button class="touch-btn" data-action="eat">EAT</button>
+        <button type="button" class="touch-btn" data-action="up">UP</button>
+        <button type="button" class="touch-btn" data-action="down">DN</button>
+        <button type="button" class="touch-btn" data-action="inv">INV</button>
+        <button type="button" class="touch-btn" data-action="craft">CRF</button>
+        <button type="button" class="touch-btn" data-action="vehicle">VEH</button>
+        <button type="button" class="touch-btn attack" data-action="attack">ATTACK</button>
+        <button type="button" class="touch-btn" data-action="eat">EAT</button>
       </div>
     `;
     root.appendChild(this.element);
@@ -43,7 +43,6 @@ export class TouchControls {
 
     this.joystick.addEventListener('pointerdown', (e) => {
       if (this.joystickPointerId !== null) return;
-      e.preventDefault();
       this.joystickActive = true;
       this.joystickPointerId = e.pointerId;
       const rect = this.joystick.getBoundingClientRect();
@@ -53,7 +52,6 @@ export class TouchControls {
 
     this.joystick.addEventListener('pointermove', (e) => {
       if (!this.joystickActive || e.pointerId !== this.joystickPointerId) return;
-      e.preventDefault();
       const dx = e.clientX - this.joystickCenter.x;
       const dy = e.clientY - this.joystickCenter.y;
       const max = 40;
@@ -71,11 +69,11 @@ export class TouchControls {
     };
     this.joystick.addEventListener('pointerup', endJoystick);
     this.joystick.addEventListener('pointercancel', endJoystick);
+    this.joystick.addEventListener('lostpointercapture', endJoystick);
 
     this.lookZone.addEventListener('pointerdown', (e) => {
       if (this.lookPointerId !== null) return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
-      e.preventDefault();
       this.lookPointerId = e.pointerId;
       this.lastLook = { x: e.clientX, y: e.clientY };
       this.lookZone.setPointerCapture(e.pointerId);
@@ -83,7 +81,6 @@ export class TouchControls {
 
     this.lookZone.addEventListener('pointermove', (e) => {
       if (e.pointerId !== this.lookPointerId) return;
-      e.preventDefault();
       const dx = e.clientX - this.lastLook.x;
       const dy = e.clientY - this.lastLook.y;
       this.lastLook = { x: e.clientX, y: e.clientY };
@@ -96,41 +93,62 @@ export class TouchControls {
     };
     this.lookZone.addEventListener('pointerup', endLook);
     this.lookZone.addEventListener('pointercancel', endLook);
+    this.lookZone.addEventListener('lostpointercapture', endLook);
 
     this.element.querySelectorAll('.touch-btn').forEach((btn) => {
-      btn.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        const action = (btn as HTMLElement).dataset.action;
-        if (action === 'up') {
-          if (!this.input.isWalkMode()) this.ascend = 1;
-        }
-        if (action === 'down') {
-          const now = performance.now();
-          if (now - this.lastDownTapTime < 350) {
-            this.input.requestWalkModeToggle();
-            this.lastDownTapTime = 0;
-          } else {
-            this.lastDownTapTime = now;
-            if (!this.input.isWalkMode()) this.ascend = -1;
-          }
-        }
-        if (action === 'attack') this.input.setTouchAttack(true);
-        if (action === 'inv' || action === 'craft') this.input.state.inventoryPressed = true;
-        if (action === 'vehicle') this.input.state.vehicleToggle = true;
-        if (action === 'eat') this.input.state.eatPressed = true;
-        this.input.setTouchAscend(this.ascend);
-      });
-      btn.addEventListener('pointerup', () => {
-        const action = (btn as HTMLElement).dataset.action;
-        if (action === 'up' || action === 'down') {
-          this.ascend = 0;
+      const action = (btn as HTMLElement).dataset.action;
+
+      btn.addEventListener('pointerdown', () => {
+        if (action === 'up' && !this.input.isWalkMode()) {
+          this.ascend = 1;
           this.input.setTouchAscend(this.ascend);
         }
-        if (action === 'attack') this.input.setTouchAttack(false);
+        if (action === 'down' && !this.input.isWalkMode()) {
+          this.ascend = -1;
+          this.input.setTouchAscend(this.ascend);
+        }
+        if (action === 'attack') {
+          this.input.setTouchAttack(true);
+        }
       });
+
+      btn.addEventListener('pointerup', (e) => {
+        if (action === 'up' || action === 'down') {
+          if (action === 'down') {
+            const now = performance.now();
+            if (now - this.lastDownTapTime < 350) {
+              this.input.requestWalkModeToggle();
+              this.lastDownTapTime = 0;
+            } else {
+              this.lastDownTapTime = now;
+            }
+          }
+          this.ascend = 0;
+          this.input.setTouchAscend(0);
+        }
+        if (action === 'attack') {
+          this.input.setTouchAttack(false);
+        }
+        if (action === 'inv' || action === 'craft') {
+          this.input.state.inventoryPressed = true;
+        }
+        if (action === 'vehicle') {
+          this.input.state.vehicleToggle = true;
+        }
+        if (action === 'eat') {
+          this.input.state.eatPressed = true;
+        }
+        e.preventDefault();
+      });
+
       btn.addEventListener('pointercancel', () => {
-        const action = (btn as HTMLElement).dataset.action;
-        if (action === 'attack') this.input.setTouchAttack(false);
+        if (action === 'up' || action === 'down') {
+          this.ascend = 0;
+          this.input.setTouchAscend(0);
+        }
+        if (action === 'attack') {
+          this.input.setTouchAttack(false);
+        }
       });
     });
   }
@@ -140,9 +158,6 @@ export class TouchControls {
       this.resetPointerState();
     }
     this.element.classList.toggle('inactive', !active);
-    if (active) {
-      this.resetPointerState();
-    }
   }
 
   resetPointerState(): void {

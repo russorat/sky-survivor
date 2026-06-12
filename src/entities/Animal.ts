@@ -188,9 +188,12 @@ export class Animal {
   private static createMesh(config: AnimalTypeConfig): THREE.Group {
     const modelKey = getModelKeyForAnimal(config.shape);
     if (modelKey) {
-      const modelScale = config.shape === 'bird' ? config.scale * 0.015 : config.scale * 0.012;
-      const model = ModelLoader.getInstance().createInstance(modelKey, config.color, modelScale);
-      if (model) return model;
+      const model = ModelLoader.getInstance().createInstance(modelKey, config.color, 1);
+      if (model) {
+        const targetHeight = config.shape === 'bird' ? 0.7 * config.scale : 0.9 * config.scale;
+        ModelLoader.getInstance().normalizeToHeight(model, targetHeight);
+        return model;
+      }
     }
     return Animal.createPrimitiveMesh(config);
   }

@@ -107,10 +107,6 @@ export class Game {
   async init(): Promise<void> {
     await this.saveManager.init();
     await ModelLoader.getInstance().preload();
-    const playerModel = ModelLoader.getInstance().createInstance('player', 0xffffff, 0.01);
-    if (playerModel) {
-      this.player.applyModel(playerModel);
-    }
 
     const save = await this.saveManager.load();
     if (save) {
@@ -442,15 +438,22 @@ export class Game {
     this.player.resetTo(spawn);
   }
 
+  private openInventoryOverlay(): void {
+    document.exitPointerLock();
+    this.input.setUiBlocking(true);
+    this.inventoryUI.openPanel(this.inventory);
+    requestAnimationFrame(() => {
+      if (this.inventoryUI.isOpen()) {
+        this.touchControls.setActive(false);
+      }
+    });
+  }
+
   private toggleInventoryOverlay(): void {
-    const willOpen = !this.inventoryUI.isOpen();
-    if (willOpen) {
-      document.exitPointerLock();
-      this.input.setUiBlocking(true);
-      this.touchControls.setActive(false);
-      this.inventoryUI.openPanel(this.inventory);
-    } else {
+    if (this.inventoryUI.isOpen()) {
       this.inventoryUI.close();
+    } else {
+      this.openInventoryOverlay();
     }
   }
 
