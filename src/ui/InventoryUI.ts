@@ -6,6 +6,7 @@ import { getVisibleRecipes } from '../crafting/recipes';
 export class InventoryUI {
   readonly element: HTMLElement;
   private root: HTMLElement;
+  private backdrop: HTMLElement;
   private panelCard: HTMLElement;
   private grid: HTMLElement;
   private recipeList: HTMLElement;
@@ -20,6 +21,7 @@ export class InventoryUI {
     this.element.className = 'overlay-panel';
     this.element.setAttribute('aria-hidden', 'true');
     this.element.innerHTML = `
+      <div class="overlay-backdrop" id="inventory-backdrop"></div>
       <div class="panel-card">
         <h2>Inventory & Crafting</h2>
         <h3 class="panel-section-title">Items</h3>
@@ -29,25 +31,34 @@ export class InventoryUI {
         <button class="panel-close" id="inventory-close" type="button">Close</button>
       </div>
     `;
-    root.appendChild(this.element);
+    this.backdrop = this.element.querySelector('#inventory-backdrop') as HTMLElement;
     this.panelCard = this.element.querySelector('.panel-card') as HTMLElement;
     this.grid = this.element.querySelector('#inventory-grid') as HTMLElement;
     this.recipeList = this.element.querySelector('#recipe-list') as HTMLElement;
 
-    this.panelCard.addEventListener('click', (e) => e.stopPropagation());
     this.panelCard.addEventListener('pointerdown', (e) => e.stopPropagation());
+    this.panelCard.addEventListener('click', (e) => e.stopPropagation());
+    this.panelCard.addEventListener('touchend', (e) => e.stopPropagation());
 
-    this.element.querySelector('#inventory-close')?.addEventListener('pointerup', (e) => {
+    const closeButton = this.element.querySelector('#inventory-close');
+    closeButton?.addEventListener('pointerup', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.close();
+    });
+    closeButton?.addEventListener('touchend', (e) => {
       e.preventDefault();
       e.stopPropagation();
       this.close();
     });
 
-    this.element.addEventListener('pointerup', (e) => {
-      if (e.target === this.element) {
-        this.close();
-      }
-    });
+    const closeFromBackdrop = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.close();
+    };
+    this.backdrop.addEventListener('pointerup', closeFromBackdrop);
+    this.backdrop.addEventListener('touchend', closeFromBackdrop);
   }
 
   setOnClose(fn: () => void): void {
@@ -68,6 +79,7 @@ export class InventoryUI {
     this.root.appendChild(this.element);
     this.element.classList.add('open');
     this.element.setAttribute('aria-hidden', 'false');
+    this.element.inert = false;
     this.render(inventory);
   }
 
@@ -76,6 +88,20 @@ export class InventoryUI {
     this.open = false;
     this.element.classList.remove('open');
     this.element.setAttribute('aria-hidden', 'true');
+    this.element.inert = true;
+    this.element.remove();
+    this.onClose?.();
+  }
+
+  /** Reset overlay state even if internal flag desynced (e.g. iOS touch quirks). */
+  forceClose(): void {
+    const wasActive = this.open || this.element.isConnected;
+    if (!wasActive) return;
+    this.open = false;
+    this.element.classList.remove('open');
+    this.element.setAttribute('aria-hidden', 'true');
+    this.element.inert = true;
+    this.element.remove();
     this.onClose?.();
   }
 
@@ -153,7 +179,7 @@ export class InventoryUI {
       button.type = 'button';
       button.textContent = 'Craft';
       button.disabled = !(canCraft && !needsBench);
-      button.addEventListener('pointerup', (e) => {
+      const craft = (e: Event) => {
         e.preventDefault();
         e.stopPropagation();
         if (!canCraft || needsBench) return;
@@ -161,7 +187,9 @@ export class InventoryUI {
           this.onCraft?.();
           this.render(inventory);
         }
-      });
+      };
+      button.addEventListener('pointerup', craft);
+      button.addEventListener('touchend', craft);
 
       item.append(info, button);
       this.recipeList.appendChild(item);

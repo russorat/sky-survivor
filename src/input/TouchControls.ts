@@ -94,6 +94,14 @@ export class TouchControls {
     this.buttonsElement.classList.toggle('inactive', !active);
   }
 
+  /** Hide joystick/look only — keeps action buttons reachable (e.g. to close inventory). */
+  setMovementActive(active: boolean): void {
+    if (!active) {
+      this.resetPointerState();
+    }
+    this.element.classList.toggle('inactive', !active);
+  }
+
   resetPointerState(): void {
     this.detachJoystickListeners();
     this.detachLookListeners();
@@ -181,7 +189,8 @@ export class TouchControls {
         return;
       }
 
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('pointerup', (e) => {
+        e.preventDefault();
         e.stopPropagation();
         if (action === 'inv' || action === 'craft') {
           this.input.state.inventoryPressed = true;

@@ -189,6 +189,8 @@ export class Game {
     return el;
   }
 
+  private inventoryToggleLock = 0;
+
   private update(dt: number): void {
     if (this.state === 'paused') {
       this.input.update();
@@ -201,6 +203,8 @@ export class Game {
     }
 
     if (this.state !== 'playing') return;
+
+    this.syncInventoryOverlayState();
 
     this.input.update();
 
@@ -453,18 +457,29 @@ export class Game {
   }
 
   private openInventoryOverlay(): void {
+    if (performance.now() < this.inventoryToggleLock) return;
     document.exitPointerLock();
     this.input.setUiBlocking(true);
     this.inventoryUI.openPanel(this.inventory);
-    this.touchControls.setActive(false);
+    if (this.input.touchMode) {
+      this.touchControls.setMovementActive(false);
+    } else {
+      this.touchControls.setActive(false);
+    }
+    this.inventoryToggleLock = performance.now() + 250;
   }
 
   private closeInventoryOverlay(): void {
+    if (performance.now() < this.inventoryToggleLock) return;
     if (!this.inventoryUI.isOpen()) {
       this.input.setUiBlocking(false);
+      if (this.input.touchMode && this.state === 'playing') {
+        this.touchControls.setActive(true);
+      }
       return;
     }
     this.inventoryUI.close();
+    this.inventoryToggleLock = performance.now() + 250;
   }
 
   private toggleInventoryOverlay(): void {
@@ -472,6 +487,20 @@ export class Game {
       this.closeInventoryOverlay();
     } else {
       this.openInventoryOverlay();
+    }
+  }
+
+  /** Recover from iOS overlay / input desync without blocking gameplay. */
+  private syncInventoryOverlayState(): void {
+    const open = this.inventoryUI.isOpen();
+    if (!open) {
+      this.input.setUiBlocking(false);
+      if (this.input.touchMode) {
+        this.touchControls.setMovementActive(true);
+        if (this.state === 'playing') {
+          this.touchControls.setActive(true);
+        }
+      }
     }
   }
 

@@ -29,7 +29,8 @@ body,
   inset: 0;
   pointer-events: none;
   touch-action: none;
-  z-index: 10;
+  z-index: 100;
+  isolation: isolate;
 }
 
 #ui-root > * {
@@ -133,35 +134,35 @@ body,
 .overlay-panel {
   position: fixed;
   inset: 0;
-  z-index: 250;
-  display: flex;
+  z-index: 400;
+  display: none;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(4px);
-  visibility: hidden;
-  opacity: 0;
-  pointer-events: none;
   touch-action: manipulation;
 }
 
 .overlay-panel.open {
-  visibility: visible;
-  opacity: 1;
-  pointer-events: auto;
+  display: flex;
+}
+
+.overlay-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  touch-action: manipulation;
 }
 
 .panel-card {
   position: relative;
   z-index: 1;
-  width: min(520px, 92vw);
+  width: min(520px, calc(100vw - 160px));
   max-height: 80vh;
   overflow: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   padding: 20px;
   border-radius: 16px;
-  background: rgba(26, 26, 46, 0.96);
+  background: rgba(26, 26, 46, 0.98);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #fff;
   touch-action: pan-y;
@@ -414,7 +415,7 @@ body,
   position: fixed;
   right: 20px;
   bottom: 24px;
-  z-index: 60;
+  z-index: 600;
   display: grid;
   grid-template-columns: repeat(2, 56px);
   gap: 10px;
