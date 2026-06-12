@@ -100,6 +100,10 @@ export class Game {
       this.refreshUI();
     });
 
+    if (this.input.touchMode) {
+      this.touchControls.setInventoryToggleHandler(() => this.scheduleInventoryToggle());
+    }
+
     window.addEventListener('resize', () => this.onResize());
     this.onResize();
   }
@@ -189,7 +193,7 @@ export class Game {
     return el;
   }
 
-  private inventoryToggleLock = 0;
+  private inventoryTogglePending = false;
 
   private update(dt: number): void {
     if (this.state === 'paused') {
@@ -204,11 +208,11 @@ export class Game {
 
     if (this.state !== 'playing') return;
 
-    this.syncInventoryOverlayState();
+    this.reconcileInventoryOverlayState();
 
     this.input.update();
 
-    if (this.input.state.inventoryPressed || this.input.state.craftPressed) {
+    if (!this.input.touchMode && (this.input.state.inventoryPressed || this.input.state.craftPressed)) {
       this.toggleInventoryOverlay();
     }
     if (this.input.state.eatPressed) this.tryEat();
@@ -456,21 +460,28 @@ export class Game {
     this.player.resetTo(spawn);
   }
 
+  /** Defer until after iOS finishes the tap that opened inventory. */
+  private scheduleInventoryToggle(): void {
+    if (this.inventoryTogglePending) return;
+    this.inventoryTogglePending = true;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        this.inventoryTogglePending = false;
+        if (this.state !== 'playing') return;
+        this.toggleInventoryOverlay();
+      });
+    });
+  }
+
   private openInventoryOverlay(): void {
-    if (performance.now() < this.inventoryToggleLock) return;
+    if (this.inventoryUI.isOpen()) return;
     document.exitPointerLock();
     this.input.setUiBlocking(true);
     this.inventoryUI.openPanel(this.inventory);
-    if (this.input.touchMode) {
-      this.touchControls.setMovementActive(false);
-    } else {
-      this.touchControls.setActive(false);
-    }
-    this.inventoryToggleLock = performance.now() + 250;
+    this.touchControls.setActive(false);
   }
 
   private closeInventoryOverlay(): void {
-    if (performance.now() < this.inventoryToggleLock) return;
     if (!this.inventoryUI.isOpen()) {
       this.input.setUiBlocking(false);
       if (this.input.touchMode && this.state === 'playing') {
@@ -479,7 +490,6 @@ export class Game {
       return;
     }
     this.inventoryUI.close();
-    this.inventoryToggleLock = performance.now() + 250;
   }
 
   private toggleInventoryOverlay(): void {
@@ -490,16 +500,21 @@ export class Game {
     }
   }
 
-  /** Recover from iOS overlay / input desync without blocking gameplay. */
-  private syncInventoryOverlayState(): void {
+  /** Fix orphan overlay nodes or stuck touch/input after iOS desync. */
+  private reconcileInventoryOverlayState(): void {
     const open = this.inventoryUI.isOpen();
+    const mounted = this.inventoryUI.isMounted();
+
+    if (open && mounted) return;
+
+    if (!open && mounted) {
+      this.inventoryUI.forceClose();
+    }
+
     if (!open) {
       this.input.setUiBlocking(false);
-      if (this.input.touchMode) {
-        this.touchControls.setMovementActive(true);
-        if (this.state === 'playing') {
-          this.touchControls.setActive(true);
-        }
+      if (this.input.touchMode && this.state === 'playing') {
+        this.touchControls.setActive(true);
       }
     }
   }

@@ -11,6 +11,7 @@ export class InventoryUI {
   private grid: HTMLElement;
   private recipeList: HTMLElement;
   private open = false;
+  private dismissGuardUntil = 0;
   private crafting = new CraftingSystem();
   private onClose?: () => void;
   private onCraft?: () => void;
@@ -37,28 +38,21 @@ export class InventoryUI {
     this.recipeList = this.element.querySelector('#recipe-list') as HTMLElement;
 
     this.panelCard.addEventListener('pointerdown', (e) => e.stopPropagation());
-    this.panelCard.addEventListener('click', (e) => e.stopPropagation());
-    this.panelCard.addEventListener('touchend', (e) => e.stopPropagation());
 
     const closeButton = this.element.querySelector('#inventory-close');
-    closeButton?.addEventListener('pointerup', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      this.close();
-    });
-    closeButton?.addEventListener('touchend', (e) => {
+    closeButton?.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
       this.close();
     });
 
-    const closeFromBackdrop = (e: Event) => {
+    this.backdrop.addEventListener('click', (e) => {
+      if (performance.now() < this.dismissGuardUntil) return;
+      if (e.target !== this.backdrop) return;
       e.preventDefault();
       e.stopPropagation();
       this.close();
-    };
-    this.backdrop.addEventListener('pointerup', closeFromBackdrop);
-    this.backdrop.addEventListener('touchend', closeFromBackdrop);
+    });
   }
 
   setOnClose(fn: () => void): void {
@@ -73,8 +67,13 @@ export class InventoryUI {
     return this.open;
   }
 
+  isMounted(): boolean {
+    return this.element.isConnected;
+  }
+
   openPanel(inventory: Inventory): void {
     this.open = true;
+    this.dismissGuardUntil = performance.now() + 500;
     inventory.consolidateStacks();
     this.root.appendChild(this.element);
     this.element.classList.add('open');
@@ -86,6 +85,7 @@ export class InventoryUI {
   close(): void {
     if (!this.open) return;
     this.open = false;
+    this.dismissGuardUntil = 0;
     this.element.classList.remove('open');
     this.element.setAttribute('aria-hidden', 'true');
     this.element.inert = true;
@@ -93,11 +93,11 @@ export class InventoryUI {
     this.onClose?.();
   }
 
-  /** Reset overlay state even if internal flag desynced (e.g. iOS touch quirks). */
   forceClose(): void {
     const wasActive = this.open || this.element.isConnected;
     if (!wasActive) return;
     this.open = false;
+    this.dismissGuardUntil = 0;
     this.element.classList.remove('open');
     this.element.setAttribute('aria-hidden', 'true');
     this.element.inert = true;
@@ -179,7 +179,7 @@ export class InventoryUI {
       button.type = 'button';
       button.textContent = 'Craft';
       button.disabled = !(canCraft && !needsBench);
-      const craft = (e: Event) => {
+      button.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         if (!canCraft || needsBench) return;
@@ -187,9 +187,7 @@ export class InventoryUI {
           this.onCraft?.();
           this.render(inventory);
         }
-      };
-      button.addEventListener('pointerup', craft);
-      button.addEventListener('touchend', craft);
+      });
 
       item.append(info, button);
       this.recipeList.appendChild(item);

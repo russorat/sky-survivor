@@ -4,6 +4,7 @@ export class TouchControls {
   readonly element: HTMLElement;
   readonly buttonsElement: HTMLElement;
   private input: InputManager;
+  private onInventoryToggle?: () => void;
   private joystick: HTMLElement;
   private knob: HTMLElement;
   private lookZone: HTMLElement;
@@ -102,6 +103,10 @@ export class TouchControls {
     this.element.classList.toggle('inactive', !active);
   }
 
+  setInventoryToggleHandler(handler: () => void): void {
+    this.onInventoryToggle = handler;
+  }
+
   resetPointerState(): void {
     this.detachJoystickListeners();
     this.detachLookListeners();
@@ -189,11 +194,12 @@ export class TouchControls {
         return;
       }
 
-      btn.addEventListener('pointerup', (e) => {
+      btn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         if (action === 'inv' || action === 'craft') {
-          this.input.state.inventoryPressed = true;
+          this.onInventoryToggle?.();
+          return;
         }
         if (action === 'vehicle') {
           this.input.state.vehicleToggle = true;

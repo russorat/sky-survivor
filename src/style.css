@@ -134,15 +134,19 @@ body,
 .overlay-panel {
   position: fixed;
   inset: 0;
-  z-index: 400;
+  z-index: 700;
   display: none;
   align-items: center;
   justify-content: center;
+  pointer-events: none;
   touch-action: manipulation;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 .overlay-panel.open {
   display: flex;
+  pointer-events: auto;
 }
 
 .overlay-backdrop {
@@ -155,7 +159,7 @@ body,
 .panel-card {
   position: relative;
   z-index: 1;
-  width: min(520px, calc(100vw - 160px));
+  width: min(520px, 92vw);
   max-height: 80vh;
   overflow: auto;
   overflow-x: hidden;
@@ -204,6 +208,9 @@ body,
   color: #0f0f1a;
   font-weight: 700;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
   touch-action: manipulation;
 }
 
