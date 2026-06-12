@@ -6,6 +6,7 @@ interface SaveData {
   hunger: number;
   health: number;
   inventory: (InventorySlot | null)[];
+  peacefulMode?: boolean;
 }
 
 interface SkySurvivorDB extends DBSchema {

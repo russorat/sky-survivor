@@ -33,7 +33,7 @@ export class AnimalSpawner {
     }
   }
 
-  update(dt: number, playerPos: THREE.Vector3, world: WorldGenerator): number {
+  update(dt: number, playerPos: THREE.Vector3, world: WorldGenerator, peacefulMode: boolean): number {
     this.spawnTimer -= dt;
     if (this.spawnTimer <= 0 && this.getAliveAnimals().length < MAX_ANIMALS) {
       this.trySpawn(playerPos, world);
@@ -49,7 +49,7 @@ export class AnimalSpawner {
     for (const animal of [...this.animals]) {
       if (animal.dead) continue;
 
-      playerDamage += animal.update(dt, worldCtx, playerPos);
+      playerDamage += animal.update(dt, worldCtx, playerPos, peacefulMode);
 
       const dist = animal.position.distanceTo(playerPos);
       if (dist > DESPAWN_RADIUS) {

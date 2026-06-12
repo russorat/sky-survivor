@@ -313,6 +313,29 @@ body,
   line-height: 1.4;
 }
 
+.mode-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.mode-option input {
+  width: 18px;
+  height: 18px;
+  accent-color: #81c784;
+  flex-shrink: 0;
+}
+
 .touch-controls {
   position: fixed;
   inset: 0;
@@ -356,23 +379,28 @@ body,
 .look-zone {
   position: absolute;
   top: 72px;
-  left: 38%;
-  right: 148px;
-  bottom: 24px;
+  left: 150px;
+  right: 24px;
+  bottom: 280px;
   pointer-events: auto;
   touch-action: none;
 }
 
-.touch-actions {
-  position: absolute;
+.touch-buttons {
+  position: fixed;
   right: 20px;
   bottom: 24px;
+  z-index: 60;
   display: grid;
   grid-template-columns: repeat(2, 56px);
   gap: 10px;
   pointer-events: auto;
   touch-action: manipulation;
-  z-index: 5;
+}
+
+.touch-buttons.inactive,
+.touch-buttons.hidden {
+  display: none;
 }
 
 .touch-btn {
@@ -412,6 +440,38 @@ body,
 
 .toast.show {
   opacity: 1;
+}
+
+.peaceful-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: none;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 2px solid rgba(129, 199, 132, 0.55);
+  color: #81c784;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.hud.peaceful-active .biome-badge {
+  top: 48px;
+}
+
+.hud.peaceful-active .mode-badge {
+  top: 80px;
+}
+
+.hud.peaceful-active .ammo-badge {
+  top: 112px;
+}
+
+.hud.peaceful-active .vehicle-badge {
+  top: 144px;
 }
 
 .biome-badge {

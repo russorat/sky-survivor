@@ -54,7 +54,7 @@ export class Animal {
     return false;
   }
 
-  update(dt: number, world: AnimalWorldContext, playerPos: THREE.Vector3): number {
+  update(dt: number, world: AnimalWorldContext, playerPos: THREE.Vector3, peacefulMode: boolean): number {
     if (this.dead) return 0;
 
     this.attackCooldown = Math.max(0, this.attackCooldown - dt);
@@ -73,14 +73,16 @@ export class Animal {
     let damageToPlayer = 0;
 
     if (
-      this.config.behavior === 'aggressive'
+      !peacefulMode
+      && this.config.behavior === 'aggressive'
       && distToPlayer < (this.config.aggroRange ?? 22) * 0.45
     ) {
       this.aggroTimer = Math.max(this.aggroTimer, 6);
     }
 
     if (
-      this.config.behavior === 'aggressive'
+      !peacefulMode
+      && this.config.behavior === 'aggressive'
       && this.aggroTimer > 0
       && distToPlayer < (this.config.aggroRange ?? 22)
     ) {

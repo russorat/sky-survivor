@@ -43,6 +43,7 @@ export class Game {
   private deathScreen: HTMLElement;
   private equippedWeapon: ItemId | null = null;
   private hasBow = false;
+  private peacefulMode = false;
 
   constructor(canvas: HTMLCanvasElement, uiRoot: HTMLElement) {
     this.canvas = canvas;
@@ -113,10 +114,16 @@ export class Game {
       this.health.load(save.health);
       this.inventory.loadFromJSON(save.inventory);
       this.updateEquippedWeapon();
+      if (save.peacefulMode !== undefined) {
+        this.peacefulMode = save.peacefulMode;
+        const peacefulInput = this.startScreen.querySelector('#peaceful-mode') as HTMLInputElement;
+        if (peacefulInput) peacefulInput.checked = this.peacefulMode;
+      }
     } else {
       this.resetPlayerPosition();
     }
     this.world.update(this.player.position);
+    this.hud.setPeacefulMode(this.peacefulMode);
   }
 
   start(): void {
@@ -130,6 +137,10 @@ export class Game {
       <div class="start-card">
         <h1>Sky Survivor</h1>
         <p>Fly across five biomes — desert, forest, tundra, ocean, and swamp. Hunt 20 unique animals, craft tools and weapons, and survive as long as you can.</p>
+        <label class="mode-option">
+          <input type="checkbox" id="peaceful-mode" />
+          <span>Peaceful mode — animals won't attack you</span>
+        </label>
         <button class="primary-btn" id="start-btn">Play</button>
         <p class="help-text">
           Desktop: WASD move, Space/Ctrl altitude, mouse look, F attack, E eat, Tab inventory & crafting<br/>
@@ -138,13 +149,16 @@ export class Game {
           Craft a bow (3 sticks + 2 hide) and arrows (2 sticks + 1 bone) for ranged combat<br/>
           Craft a workbench, then build gliders, planes, and rocket ships. Press V to mount<br/>
           Watch out for wolves, jackals, boars, and alligators — they fight back<br/>
-          Mobile: left thumb on joystick to move, right thumb drag the open area to look around<br/>
-          Action buttons sit on the far right — drag camera in the space to their left
+          Mobile: left thumb on joystick to move, right thumb drag the center-right area to look around<br/>
+          Action buttons are in a separate column on the far right — above that zone is for camera drag
         </p>
       </div>
     `;
     el.querySelector('#start-btn')?.addEventListener('pointerup', (e) => {
       e.preventDefault();
+      const peacefulInput = el.querySelector('#peaceful-mode') as HTMLInputElement;
+      this.peacefulMode = peacefulInput?.checked ?? false;
+      this.hud.setPeacefulMode(this.peacefulMode);
       void this.audio.resume();
       this.state = 'playing';
       el.style.display = 'none';
@@ -225,8 +239,8 @@ export class Game {
       this.hud.showToast(modeToggled === 'walk' ? 'Walking mode' : 'Flying mode');
     }
     this.world.update(this.player.position);
-    const animalDamage = this.spawner.update(dt, this.player.position, this.world);
-    if (animalDamage > 0) {
+    const animalDamage = this.spawner.update(dt, this.player.position, this.world, this.peacefulMode);
+    if (!this.peacefulMode && animalDamage > 0) {
       this.health.takeDamage(animalDamage);
       this.audio.play('hurt');
     }
@@ -292,6 +306,7 @@ export class Game {
         hunger: this.hunger.hunger,
         health: this.health.health,
         inventory: this.inventory.toJSON(),
+        peacefulMode: this.peacefulMode,
       },
       () => {},
     );
