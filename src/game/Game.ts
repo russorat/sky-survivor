@@ -14,6 +14,7 @@ import { SaveManager } from '../save/SaveManager';
 import { getBiomeDisplayName } from '../world/Biome';
 import { VEHICLE_PRIORITY, type VehicleId } from '../vehicles/VehicleTypes';
 import { AudioSystem } from '../audio/AudioSystem';
+import { pickTapTarget } from '../combat/TapTargeting';
 
 type GameState = 'menu' | 'playing' | 'dead' | 'paused';
 
@@ -154,7 +155,8 @@ export class Game {
           Craft a workbench, then build gliders, planes, and rocket ships. Press V to mount<br/>
           Watch out for wolves, jackals, boars, and alligators — they fight back<br/>
           Mobile: left thumb on joystick to move, right thumb drag the center-right area to look around<br/>
-          Action buttons are in a separate column on the far right — above that zone is for camera drag
+          Tap animals, trees, or rocks in the world to attack them<br/>
+          Action buttons are in a separate column on the far right
         </p>
       </div>
     `;
@@ -253,8 +255,13 @@ export class Game {
       this.audio.play('hurt');
     }
 
-    if (this.input.state.attackPressed) {
+    if (this.input.state.attackPressed && !this.input.touchMode) {
       this.handleAttack(forward);
+    }
+
+    const touchTap = this.input.consumeTouchTap();
+    if (touchTap) {
+      this.handleTapAttack(touchTap.x, touchTap.y);
     }
 
     const projectileHits = this.combat.updateProjectiles(dt, this.spawner.getAliveAnimals());
@@ -353,6 +360,63 @@ export class Game {
       if (this.inventory.countItem(id) > 0) return id;
     }
     return null;
+  }
+
+  private handleTapAttack(screenX: number, screenY: number): void {
+    const target = pickTapTarget(
+      this.camera,
+      this.canvas,
+      screenX,
+      screenY,
+      this.spawner.getAliveAnimals(),
+      this.world.getHarvestables(),
+    );
+    if (!target) return;
+
+    const damage = this.getAttackDamage();
+    const origin = this.player.getAttackOrigin();
+    const maxRange = target.kind === 'harvestable' ? 14 : 6;
+    if (origin.distanceTo(target.point) > maxRange) {
+      this.hud.showToast('Too far away');
+      return;
+    }
+
+    const aim = target.point.clone().sub(origin).normalize();
+
+    if (target.kind === 'harvestable') {
+      const harvested = this.combat.attackHarvestableObject(target.object, damage);
+      if (harvested) {
+        this.audio.play('hit');
+        const label = harvested.type === 'tree' ? 'Tree' : 'Rock';
+        if (harvested.destroyed) {
+          this.hud.showToast(`${label} harvested!`);
+        }
+      }
+      return;
+    }
+
+    const arrowCount = this.inventory.countItem('arrow');
+    if (this.hasBow && arrowCount > 0) {
+      if (this.combat.tryRangedAttack(origin, aim, ITEMS.bow.damage ?? 18)) {
+        this.audio.play('attack');
+        this.inventory.removeItem('arrow', 1);
+      }
+      return;
+    }
+
+    if (this.hasBow && arrowCount === 0) {
+      this.hud.showToast('Out of arrows — using melee');
+    }
+
+    if (this.combat.attackAnimal(target.animal, damage)) {
+      this.audio.play('attack');
+      this.audio.play('hit');
+      if (target.animal.dead) {
+        this.combat.spawnLoot(target.animal);
+        this.spawner.removeAnimal(target.animal);
+        this.hud.showToast(`Defeated ${target.animal.config.name}`);
+      }
+    }
   }
 
   private handleAttack(forward: THREE.Vector3): void {

@@ -108,6 +108,18 @@ export class InputManager {
     this.state.ascend = value;
   }
 
+  private pendingTouchTap: { x: number; y: number } | null = null;
+
+  setTouchTap(x: number, y: number): void {
+    this.pendingTouchTap = { x, y };
+  }
+
+  consumeTouchTap(): { x: number; y: number } | null {
+    const tap = this.pendingTouchTap;
+    this.pendingTouchTap = null;
+    return tap;
+  }
+
   setTouchAttack(pressed: boolean): void {
     if (pressed && !this.state.attack) this.state.attackPressed = true;
     this.state.attack = pressed;

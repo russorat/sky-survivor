@@ -46,6 +46,41 @@ export class CombatSystem {
     return this.projectiles.update(dt, animals);
   }
 
+  attackHarvestableObject(
+    obj: THREE.Object3D,
+    damage: number,
+  ): { type: HarvestableType; position: THREE.Vector3; destroyed: boolean } | null {
+    if (this.attackCooldown > 0) return null;
+
+    const data = getHarvestableData(obj);
+    if (!data) return null;
+
+    this.attackCooldown = 0.4;
+    data.hp -= damage;
+    data.hitFlash = 0.12;
+    flashHarvestable(obj, true);
+
+    const position = getHarvestableWorldPosition(obj);
+    const destroyed = data.hp <= 0;
+
+    if (destroyed) {
+      data.depleted = true;
+      const drop = HARVEST_DROPS[data.type];
+      const count = drop.min + Math.floor(Math.random() * (drop.max - drop.min + 1));
+      this.spawnResourceLoot(drop.itemId, count, position);
+      obj.parent?.remove(obj);
+    }
+
+    return { type: data.type, position, destroyed };
+  }
+
+  attackAnimal(animal: Animal, damage: number): boolean {
+    if (this.attackCooldown > 0 || animal.dead) return false;
+    this.attackCooldown = 0.4;
+    animal.takeDamage(damage);
+    return true;
+  }
+
   tryAttack(
     playerPos: THREE.Vector3,
     forward: THREE.Vector3,

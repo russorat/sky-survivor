@@ -13,7 +13,11 @@ export class TouchControls {
   private joystickPointerId: number | null = null;
   private lookPointerId: number | null = null;
   private lastLook = { x: 0, y: 0 };
+  private lookStart = { x: 0, y: 0, time: 0 };
+  private lookDragDistance = 0;
   private lastDownTapTime = 0;
+  private readonly tapMoveThreshold = 14;
+  private readonly tapTimeMs = 280;
 
   private readonly onJoystickMove = (e: PointerEvent) => {
     if (!this.joystickActive || e.pointerId !== this.joystickPointerId) return;
@@ -38,14 +42,22 @@ export class TouchControls {
     if (e.pointerId !== this.lookPointerId) return;
     const dx = e.clientX - this.lastLook.x;
     const dy = e.clientY - this.lastLook.y;
+    this.lookDragDistance += Math.hypot(dx, dy);
     this.lastLook = { x: e.clientX, y: e.clientY };
-    this.input.setTouchLook(dx * 0.55, dy * 0.55);
+    if (this.lookDragDistance >= this.tapMoveThreshold) {
+      this.input.setTouchLook(dx * 0.55, dy * 0.55);
+    }
   };
 
   private readonly onLookEnd = (e: PointerEvent) => {
     if (e.pointerId !== this.lookPointerId) return;
+    const elapsed = performance.now() - this.lookStart.time;
+    const isTap = this.lookDragDistance < this.tapMoveThreshold && elapsed < this.tapTimeMs;
     this.detachLookListeners();
     this.lookPointerId = null;
+    if (isTap) {
+      this.input.setTouchTap(e.clientX, e.clientY);
+    }
   };
 
   constructor(input: InputManager, root: HTMLElement) {
@@ -69,7 +81,6 @@ export class TouchControls {
       <button type="button" class="touch-btn" data-action="inv">INV</button>
       <button type="button" class="touch-btn" data-action="craft">CRF</button>
       <button type="button" class="touch-btn" data-action="vehicle">VEH</button>
-      <button type="button" class="touch-btn attack" data-action="attack">ATTACK</button>
       <button type="button" class="touch-btn" data-action="eat">EAT</button>
     `;
 
@@ -137,6 +148,8 @@ export class TouchControls {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       e.stopPropagation();
       this.lookPointerId = e.pointerId;
+      this.lookStart = { x: e.clientX, y: e.clientY, time: performance.now() };
+      this.lookDragDistance = 0;
       this.lastLook = { x: e.clientX, y: e.clientY };
       this.attachLookListeners();
     });
@@ -151,16 +164,13 @@ export class TouchControls {
         e.stopPropagation();
       });
 
-      if (action === 'up' || action === 'down' || action === 'attack') {
+      if (action === 'up' || action === 'down') {
         btn.addEventListener('pointerdown', () => {
           if (action === 'up' && !this.input.isWalkMode()) {
             this.input.setTouchAscend(1);
           }
           if (action === 'down' && !this.input.isWalkMode()) {
             this.input.setTouchAscend(-1);
-          }
-          if (action === 'attack') {
-            this.input.setTouchAttack(true);
           }
         });
 
@@ -178,17 +188,11 @@ export class TouchControls {
             }
             this.input.setTouchAscend(0);
           }
-          if (action === 'attack') {
-            this.input.setTouchAttack(false);
-          }
         });
 
         btn.addEventListener('pointercancel', () => {
           if (action === 'up' || action === 'down') {
             this.input.setTouchAscend(0);
-          }
-          if (action === 'attack') {
-            this.input.setTouchAttack(false);
           }
         });
         return;
