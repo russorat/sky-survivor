@@ -324,6 +324,7 @@ body,
   background: rgba(255, 255, 255, 0.08);
   border: 2px solid rgba(255, 255, 255, 0.18);
   pointer-events: auto;
+  touch-action: none;
 }
 
 .joystick-knob {
@@ -339,11 +340,12 @@ body,
 
 .look-zone {
   position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 45%;
-  height: 55%;
+  top: 72px;
+  left: 38%;
+  right: 148px;
+  bottom: 24px;
   pointer-events: auto;
+  touch-action: none;
 }
 
 .touch-actions {
@@ -354,6 +356,8 @@ body,
   grid-template-columns: repeat(2, 56px);
   gap: 10px;
   pointer-events: auto;
+  touch-action: manipulation;
+  z-index: 2;
 }
 
 .touch-btn {

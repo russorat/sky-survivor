@@ -143,7 +143,8 @@ export class Game {
           Attack trees (sticks) and rocks (stone) with F — aim at them and hit a few times<br/>
           Craft a bow (3 sticks + 2 hide) and arrows (2 sticks + 1 bone) for ranged combat<br/>
           Craft a workbench, then build gliders, planes, and rocket ships. Press V to mount<br/>
-          Mobile: joystick + touch buttons
+          Mobile: left thumb on joystick to move, right thumb drag the open area to look around<br/>
+          Action buttons sit on the far right — drag camera in the space to their left
         </p>
       </div>
     `;

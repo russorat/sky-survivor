@@ -38,6 +38,8 @@ export class TouchControls {
     const lookZone = this.element.querySelector('#look-zone') as HTMLElement;
 
     joystick.addEventListener('pointerdown', (e) => {
+      if (this.joystickPointerId !== null) return;
+      e.preventDefault();
       this.joystickActive = true;
       this.joystickPointerId = e.pointerId;
       const rect = joystick.getBoundingClientRect();
@@ -47,6 +49,7 @@ export class TouchControls {
 
     joystick.addEventListener('pointermove', (e) => {
       if (!this.joystickActive || e.pointerId !== this.joystickPointerId) return;
+      e.preventDefault();
       const dx = e.clientX - this.joystickCenter.x;
       const dy = e.clientY - this.joystickCenter.y;
       const max = 40;
@@ -69,6 +72,9 @@ export class TouchControls {
     joystick.addEventListener('pointercancel', endJoystick);
 
     lookZone.addEventListener('pointerdown', (e) => {
+      if (this.lookPointerId !== null) return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      e.preventDefault();
       this.lookPointerId = e.pointerId;
       this.lastLook = { x: e.clientX, y: e.clientY };
       lookZone.setPointerCapture(e.pointerId);
@@ -76,10 +82,11 @@ export class TouchControls {
 
     lookZone.addEventListener('pointermove', (e) => {
       if (e.pointerId !== this.lookPointerId) return;
+      e.preventDefault();
       const dx = e.clientX - this.lastLook.x;
       const dy = e.clientY - this.lastLook.y;
       this.lastLook = { x: e.clientX, y: e.clientY };
-      this.input.setTouchLook(dx * 0.4, dy * 0.4);
+      this.input.setTouchLook(dx * 0.55, dy * 0.55);
     });
 
     const endLook = (e: PointerEvent) => {
