@@ -13,6 +13,8 @@ body,
   background: #0f0f1a;
   font-family: system-ui, -apple-system, sans-serif;
   user-select: none;
+  touch-action: none;
+  overscroll-behavior: none;
 }
 
 #game-canvas {
@@ -26,7 +28,7 @@ body,
   position: fixed;
   inset: 0;
   pointer-events: none;
-  touch-action: auto;
+  touch-action: none;
   z-index: 10;
 }
 
@@ -177,6 +179,7 @@ body,
   color: #0f0f1a;
   font-weight: 700;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .inventory-grid {
@@ -234,6 +237,7 @@ body,
   font-weight: 700;
   cursor: pointer;
   pointer-events: auto;
+  touch-action: manipulation;
 }
 
 .recipe-item.disabled button {
@@ -252,7 +256,7 @@ body,
   background: radial-gradient(circle at top, #1a2744, #0f0f1a);
   color: #fff;
   pointer-events: auto;
-  touch-action: auto;
+  touch-action: none;
 }
 
 .start-card,
@@ -304,6 +308,7 @@ body,
   inset: 0;
   z-index: 50;
   pointer-events: none;
+  touch-action: none;
 }
 
 .touch-controls.inactive {
@@ -371,6 +376,7 @@ body,
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .touch-btn.attack {
@@ -398,39 +404,9 @@ body,
   opacity: 1;
 }
 
-.time-badge {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.55);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-.time-badge.night {
-  border-color: rgba(121, 134, 203, 0.55);
-  color: #9fa8da;
-}
-
-.time-badge.dawn,
-.time-badge.dusk {
-  border-color: rgba(255, 138, 101, 0.55);
-  color: #ffab91;
-}
-
-.time-badge.day {
-  border-color: rgba(255, 213, 79, 0.55);
-  color: #ffe082;
-}
-
 .biome-badge {
   position: absolute;
-  top: 48px;
+  top: 16px;
   right: 16px;
   padding: 6px 14px;
   border-radius: 999px;
@@ -445,7 +421,7 @@ body,
 
 .mode-badge {
   position: absolute;
-  top: 80px;
+  top: 48px;
   right: 16px;
   padding: 5px 12px;
   border-radius: 999px;
@@ -465,7 +441,7 @@ body,
 
 .ammo-badge {
   position: absolute;
-  top: 112px;
+  top: 80px;
   right: 16px;
   padding: 5px 12px;
   border-radius: 999px;
@@ -479,7 +455,7 @@ body,
 
 .vehicle-badge {
   position: absolute;
-  top: 144px;
+  top: 112px;
   right: 16px;
   padding: 5px 12px;
   border-radius: 999px;

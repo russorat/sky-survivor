@@ -6,7 +6,6 @@ interface SaveData {
   hunger: number;
   health: number;
   inventory: (InventorySlot | null)[];
-  timeOfDay?: number;
 }
 
 interface SkySurvivorDB extends DBSchema {

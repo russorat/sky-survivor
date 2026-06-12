@@ -6,7 +6,6 @@ export class HUD {
   private modeLabel: HTMLElement;
   private ammoLabel: HTMLElement;
   private vehicleLabel: HTMLElement;
-  private timeLabel: HTMLElement;
 
   constructor(root: HTMLElement) {
     this.element = document.createElement('div');
@@ -16,7 +15,6 @@ export class HUD {
       <div class="hud-bar" id="hunger-bar"><div class="hud-bar-fill hunger" id="hunger-fill"></div></div>
       <div class="hud-bar-label" id="health-label">Health</div>
       <div class="hud-bar" id="health-bar"><div class="hud-bar-fill health" id="health-fill"></div></div>
-      <div class="time-badge" id="time-badge">Day · 8:00 AM</div>
       <div class="biome-badge" id="biome-badge">Forest</div>
       <div class="mode-badge" id="mode-badge">Flying</div>
       <div class="ammo-badge" id="ammo-badge"></div>
@@ -31,14 +29,6 @@ export class HUD {
     this.modeLabel = this.element.querySelector('#mode-badge') as HTMLElement;
     this.ammoLabel = this.element.querySelector('#ammo-badge') as HTMLElement;
     this.vehicleLabel = this.element.querySelector('#vehicle-badge') as HTMLElement;
-    this.timeLabel = this.element.querySelector('#time-badge') as HTMLElement;
-  }
-
-  setTimeDisplay(phase: string, clock: string): void {
-    const phaseLabel = phase.charAt(0).toUpperCase() + phase.slice(1);
-    this.timeLabel.textContent = `${phaseLabel} · ${clock}`;
-    this.timeLabel.classList.remove('night', 'dawn', 'day', 'dusk');
-    this.timeLabel.classList.add(phase);
   }
 
   setVehicleDisplay(vehicleName: string | null, fuelCount?: number): void {

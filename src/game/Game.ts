@@ -12,7 +12,6 @@ import { HUD } from '../ui/HUD';
 import { InventoryUI } from '../ui/InventoryUI';
 import { SaveManager } from '../save/SaveManager';
 import { getBiomeDisplayName } from '../world/Biome';
-import { DayNightCycle } from '../world/DayNightCycle';
 import { VEHICLE_PRIORITY, type VehicleId } from '../vehicles/VehicleTypes';
 
 type GameState = 'menu' | 'playing' | 'dead' | 'paused';
@@ -36,9 +35,6 @@ export class Game {
   private hud: HUD;
   private inventoryUI: InventoryUI;
   private saveManager = new SaveManager();
-  private dayNight: DayNightCycle;
-  private ambientLight: THREE.AmbientLight;
-  private sunLight: THREE.DirectionalLight;
 
   private state: GameState = 'menu';
   private startScreen: HTMLElement;
@@ -56,25 +52,22 @@ export class Game {
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x87ceeb);
-    const fog = new THREE.Fog(0x87ceeb, 60, 180);
-    this.scene.fog = fog;
+    this.scene.fog = new THREE.Fog(0x87ceeb, 60, 180);
 
     this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 300);
 
-    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.55);
-    this.sunLight = new THREE.DirectionalLight(0xffffff, 0.85);
-    this.sunLight.position.set(40, 80, 20);
-    this.sunLight.castShadow = true;
-    this.sunLight.shadow.mapSize.set(1024, 1024);
-    this.sunLight.shadow.camera.near = 1;
-    this.sunLight.shadow.camera.far = 200;
-    this.sunLight.shadow.camera.left = -80;
-    this.sunLight.shadow.camera.right = 80;
-    this.sunLight.shadow.camera.top = 80;
-    this.sunLight.shadow.camera.bottom = -80;
-    this.scene.add(this.ambientLight, this.sunLight);
-
-    this.dayNight = new DayNightCycle(this.scene, this.ambientLight, this.sunLight, fog);
+    const ambient = new THREE.AmbientLight(0xffffff, 0.55);
+    const sun = new THREE.DirectionalLight(0xffffff, 0.85);
+    sun.position.set(40, 80, 20);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(1024, 1024);
+    sun.shadow.camera.near = 1;
+    sun.shadow.camera.far = 200;
+    sun.shadow.camera.left = -80;
+    sun.shadow.camera.right = 80;
+    sun.shadow.camera.top = 80;
+    sun.shadow.camera.bottom = -80;
+    this.scene.add(ambient, sun);
 
     this.world = new WorldGenerator(this.scene);
     this.player = new PlayerController();
@@ -116,9 +109,6 @@ export class Game {
       this.health.load(save.health);
       this.inventory.loadFromJSON(save.inventory);
       this.updateEquippedWeapon();
-      if (save.timeOfDay !== undefined) {
-        this.dayNight.load(save.timeOfDay);
-      }
     } else {
       this.resetPlayerPosition();
     }
@@ -135,7 +125,7 @@ export class Game {
     el.innerHTML = `
       <div class="start-card">
         <h1>Sky Survivor</h1>
-        <p>Fly across five biomes — desert, forest, tundra, ocean, and swamp. Hunt 20 unique animals, craft tools and weapons, and survive as long as you can. A full day/night cycle unfolds as you explore.</p>
+        <p>Fly across five biomes — desert, forest, tundra, ocean, and swamp. Hunt 20 unique animals, craft tools and weapons, and survive as long as you can.</p>
         <button class="primary-btn" id="start-btn">Play</button>
         <p class="help-text">
           Desktop: WASD move, Space/Ctrl altitude, mouse look, F attack, E eat, Tab inventory & crafting<br/>
@@ -231,8 +221,6 @@ export class Game {
     this.world.update(this.player.position);
     this.spawner.update(dt, this.player.position, this.world);
 
-    this.dayNight.update(dt);
-
     if (this.input.state.attackPressed) {
       this.handleAttack(forward);
     }
@@ -271,7 +259,6 @@ export class Game {
       this.health.maxHealth,
       biome,
     );
-    this.hud.setTimeDisplay(this.dayNight.getPhase(), this.dayNight.getClockLabel());
     this.hud.setAmmoDisplay(this.hasBow && !this.player.isMounted(), this.inventory.countItem('arrow'));
     if (this.player.isMounted()) {
       const fuel = this.player.mountedVehicle === 'rocket_ship'
@@ -290,7 +277,6 @@ export class Game {
         hunger: this.hunger.hunger,
         health: this.health.health,
         inventory: this.inventory.toJSON(),
-        timeOfDay: this.dayNight.getTimeOfDay(),
       },
       () => {},
     );
