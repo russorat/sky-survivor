@@ -92,6 +92,10 @@ export class Game {
     uiRoot.appendChild(this.startScreen);
     uiRoot.appendChild(this.deathScreen);
 
+    if (this.input.touchMode) {
+      this.touchControls.setActive(false);
+    }
+
     this.inventoryUI.setOnClose(() => this.onOverlayClosed());
     this.inventoryUI.setOnCraft(() => {
       this.updateEquippedWeapon();
@@ -143,9 +147,11 @@ export class Game {
         </p>
       </div>
     `;
-    el.querySelector('#start-btn')?.addEventListener('click', () => {
+    el.querySelector('#start-btn')?.addEventListener('pointerup', (e) => {
+      e.preventDefault();
       this.state = 'playing';
       el.style.display = 'none';
+      this.touchControls.setActive(true);
       if (!this.input.touchMode) this.canvas.requestPointerLock();
     });
     return el;
@@ -162,10 +168,12 @@ export class Game {
         <button class="primary-btn" id="respawn-btn">Continue</button>
       </div>
     `;
-    el.querySelector('#respawn-btn')?.addEventListener('click', () => {
+    el.querySelector('#respawn-btn')?.addEventListener('pointerup', (e) => {
+      e.preventDefault();
       this.respawn();
       el.style.display = 'none';
       this.state = 'playing';
+      this.touchControls.setActive(true);
     });
     return el;
   }
@@ -250,6 +258,7 @@ export class Game {
     if (died) {
       this.state = 'dead';
       this.deathScreen.style.display = 'flex';
+      this.touchControls.setActive(false);
       document.exitPointerLock();
     }
 
@@ -433,7 +442,9 @@ export class Game {
 
   private onOverlayClosed(): void {
     this.input.setUiBlocking(false);
-    this.touchControls.setActive(true);
+    if (this.state === 'playing') {
+      this.touchControls.setActive(true);
+    }
     if (this.state === 'playing' && !this.input.touchMode) {
       this.canvas.requestPointerLock();
     }

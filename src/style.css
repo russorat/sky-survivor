@@ -12,7 +12,6 @@ body,
   overflow: hidden;
   background: #0f0f1a;
   font-family: system-ui, -apple-system, sans-serif;
-  touch-action: none;
   user-select: none;
 }
 
@@ -20,12 +19,15 @@ body,
   display: block;
   width: 100%;
   height: 100%;
+  touch-action: none;
 }
 
 #ui-root {
   position: fixed;
   inset: 0;
   pointer-events: none;
+  touch-action: auto;
+  z-index: 10;
 }
 
 #ui-root > * {
@@ -243,13 +245,14 @@ body,
 .death-screen {
   position: fixed;
   inset: 0;
-  z-index: 200;
+  z-index: 300;
   display: flex;
   align-items: center;
   justify-content: center;
   background: radial-gradient(circle at top, #1a2744, #0f0f1a);
   color: #fff;
-  z-index: 20;
+  pointer-events: auto;
+  touch-action: auto;
 }
 
 .start-card,
@@ -285,6 +288,8 @@ body,
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .help-text {
