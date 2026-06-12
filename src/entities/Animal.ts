@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { WATER_LEVEL, BiomeType } from '../world/Biome';
 import { canAnimalExistAt } from './AnimalTypes';
 import type { AnimalTypeConfig } from './AnimalTypes';
+import { createAnimalMesh } from './AnimalMeshes';
 
 export interface AnimalWorldContext {
   getHeight: (x: number, z: number) => number;
@@ -129,6 +130,23 @@ export class Animal {
 
     this.mesh.position.copy(this.position);
 
+    const toTarget = this.wanderTarget.clone().sub(this.position);
+    toTarget.y = 0;
+    const moving = this.fleeTimer > 0 || this.aggroTimer > 0 || toTarget.length() > 0.5;
+    if (moving && this.config.movement === 'ground') {
+      const stride = Math.sin(Date.now() * 0.014 + this.position.x) * 0.04;
+      this.mesh.rotation.x = stride;
+      this.mesh.rotation.z = Math.sin(Date.now() * 0.01 + this.position.z) * 0.02;
+    } else if (this.config.movement === 'fly') {
+      this.mesh.rotation.x = Math.sin(Date.now() * 0.003) * 0.08;
+      this.mesh.rotation.z = Math.cos(Date.now() * 0.0025) * 0.12;
+    } else if (this.config.movement === 'swim') {
+      this.mesh.rotation.x = Math.sin(Date.now() * 0.009) * 0.05;
+    } else {
+      this.mesh.rotation.x = THREE.MathUtils.lerp(this.mesh.rotation.x, 0, Math.min(1, dt * 8));
+      this.mesh.rotation.z = THREE.MathUtils.lerp(this.mesh.rotation.z, 0, Math.min(1, dt * 8));
+    }
+
     if (this.hitFlashTimer > 0) {
       this.hitFlashTimer -= dt;
       this.setEmissive(0xff4444);
@@ -187,81 +205,6 @@ export class Animal {
   }
 
   private static createMesh(config: AnimalTypeConfig): THREE.Group {
-    return Animal.createPrimitiveMesh(config);
-  }
-
-  private static createPrimitiveMesh(config: AnimalTypeConfig): THREE.Group {
-    const group = new THREE.Group();
-    const mat = new THREE.MeshLambertMaterial({ color: config.color, flatShading: true });
-
-    switch (config.shape) {
-      case 'quadruped':
-        Animal.addBox(group, mat, 0, 0.6, 0, 1.2, 0.8, 0.6);
-        Animal.addBox(group, mat, 0.7, 0.9, 0, 0.5, 0.5, 0.5);
-        Animal.addLegs(group, mat);
-        break;
-      case 'bird':
-        Animal.addBox(group, mat, 0, 0.5, 0, 0.8, 0.5, 0.5);
-        Animal.addBox(group, mat, -0.5, 0.7, 0, 1.2, 0.1, 0.4);
-        Animal.addBox(group, mat, 0.4, 0.7, 0, 0.3, 0.3, 0.3);
-        break;
-      case 'snake':
-        for (let i = 0; i < 5; i++) {
-          Animal.addBox(group, mat, -0.8 + i * 0.35, 0.15, 0, 0.35, 0.2, 0.25);
-        }
-        Animal.addBox(group, mat, 1, 0.25, 0, 0.4, 0.3, 0.3);
-        break;
-      case 'scorpion':
-        Animal.addBox(group, mat, 0, 0.2, 0, 1, 0.3, 0.5);
-        Animal.addBox(group, mat, -0.6, 0.5, 0, 0.5, 0.15, 0.15);
-        for (let i = 0; i < 4; i++) {
-          Animal.addBox(group, mat, -0.3 + i * 0.2, 0.05, 0.2, 0.05, 0.2, 0.05);
-          Animal.addBox(group, mat, -0.3 + i * 0.2, 0.05, -0.2, 0.05, 0.2, 0.05);
-        }
-        break;
-      case 'fish':
-        Animal.addBox(group, mat, 0, 0, 0, 1.2, 0.4, 0.35);
-        Animal.addBox(group, mat, -0.7, 0, 0, 0.4, 0.5, 0.08);
-        Animal.addBox(group, mat, 0.65, 0.1, 0, 0.2, 0.2, 0.2);
-        break;
-      case 'crab':
-        Animal.addBox(group, mat, 0, 0.15, 0, 0.9, 0.25, 0.7);
-        for (const [x, z] of [[-0.5, 0.4], [0.5, 0.4], [-0.5, -0.4], [0.5, -0.4]] as [number, number][]) {
-          Animal.addBox(group, mat, x, 0.05, z, 0.12, 0.15, 0.12);
-        }
-        Animal.addBox(group, mat, 0.5, 0.25, 0.35, 0.35, 0.08, 0.08);
-        Animal.addBox(group, mat, 0.5, 0.25, -0.35, 0.35, 0.08, 0.08);
-        break;
-      case 'amphibian':
-        Animal.addBox(group, mat, 0, 0.15, 0, 0.7, 0.25, 0.6);
-        Animal.addBox(group, mat, 0.35, 0.25, 0, 0.3, 0.25, 0.3);
-        for (const x of [-0.25, 0.25]) {
-          Animal.addBox(group, mat, x, 0.05, 0.25, 0.15, 0.1, 0.15);
-          Animal.addBox(group, mat, x, 0.05, -0.25, 0.15, 0.1, 0.15);
-        }
-        break;
-    }
-
-    group.scale.setScalar(config.scale);
-    return group;
-  }
-
-  private static addBox(
-    group: THREE.Group,
-    mat: THREE.Material,
-    x: number, y: number, z: number,
-    w: number, h: number, d: number,
-  ): void {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-    mesh.position.set(x, y, z);
-    mesh.castShadow = true;
-    group.add(mesh);
-  }
-
-  private static addLegs(group: THREE.Group, mat: THREE.Material): void {
-    const positions: [number, number][] = [[-0.3, 0.4], [0.3, 0.4], [-0.3, -0.4], [0.3, -0.4]];
-    for (const [x, z] of positions) {
-      Animal.addBox(group, mat, x, 0.2, z, 0.15, 0.4, 0.15);
-    }
+    return createAnimalMesh(config);
   }
 }
